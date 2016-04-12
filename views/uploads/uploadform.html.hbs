@@ -1,0 +1,33 @@
+	<script type='text/javascript'>
+		$(document).ready(function() {
+			$('#s3direct_uploader_submit').click(function(){ 
+    
+                var size = document.getElementById('s3direct_uploader_song').files[0].size
+                if ((size / (1024*1024)) > 10 ) {
+                    $('.upload-errors').html('')
+                    $('.upload-errors').html('Tus Archivos deben ser inferiores a 10 Mb')
+                    return(false);
+                }
+                $('#size').html(size);
+                $('#loader').show();
+                $('#direct_s3').submit();
+            });
+		});
+	</script>
+
+	<form accept-charset='UTF-8' action='https://{{bucket}}.s3.amazonaws.com/' enctype='multipart/form-data' id='direct_s3' method='post'>
+		<input id='s3direct_uploader_acl' name='acl' type='hidden' value='private'>
+		<input id='s3direct_uploader_success_action_redirect' name='success_action_redirect' type='hidden' value='http://684e7ec9.ngrok.com/success'>
+		<input id='s3direct_uploader_key' name='key' type='hidden' value='{{key}}'>
+		<input id='s3direct_uploader_aws_access_key_id' name='AWSAccessKeyId' type='hidden' value='{{AWSAccessKeyId}}'>
+		<input id='s3direct_uploader_policy' name='policy' type='hidden' value='{{policy}}'>
+		<input id='s3direct_uploader_signature' name='signature' type='hidden' value='{{signature}}'>
+		<input id='s3direct_uploader_song' name='file' type='file'>
+	</form>
+
+	<br/>
+	<br/>
+	
+    <a id='s3direct_uploader_submit'  href='#hola' class='submit-direct-to-s3 btn btn-primary'>Adjuntar</a>
+    <p id='loader'>Subiendo Archivo</p>
+    <p id='size'></p>

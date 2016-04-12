@@ -1,0 +1,37 @@
+<br/>
+<br/>
+<div class="jumbotron">
+    <h1>vPedidos web app</h1>
+    <br/>
+    <p>
+        <a class="btn btn-lg btn-success" href="/pedidos/new">Nuevo Pedido</a>
+        <a class="btn btn-lg btn-primary" href="/pedidos/searchform">Buscar Pedido</a>
+        <a class="btn btn-lg btn-primary" href="/rest_api">API Docs</a>
+    </p>
+ </div>
+<div>
+<br/>
+<br/>
+<h1 id="title_pedidos">Lista de Pedidos</h1>
+<table class="table table-striped">
+    <thead>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Valor</th>
+        <th>action</th>
+    </thead>
+    <tbody>
+        {{#each pedidos}}
+        <tr>
+            <td>{{cliente}}</td>
+            <td>{{fecha}}</td>
+            <td>{{valor}}</td>
+            <td id="cosa">
+                <a data-target="#myModal" href="/pedidos/{{id}}/edit" class="btn btn-primary btn-xs">Editar</a>
+                <a class="btn btn-default btn-xs delete_pedido" href="/pedidos/{{id}}" >Borrar</a>
+            </td>
+        </tr>
+        {{/each}}
+
+    </tbody>
+</table>

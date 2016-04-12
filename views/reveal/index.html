@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Cirrus.js Seminar</title>
+
+		<meta name="description" content="Seminario Cirrus.js">
+		<meta name="author" content="Cristian Vasquez">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal/reveal.min.css">
+		<link rel="stylesheet" href="css/reveal/night.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="css/reveal/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+    <style type="text/css" media="all">
+          h1 {color: #00BCEB !important;}
+          #mvc strong {color: #00BCEB; margin-right: 20px;}
+          #mvc_vista {background-color: white;}
+          .no_border {border: none !important; background-color: transparent !important;}
+    </style>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Seminario Cirrus.js</h1>
+					<h3>HTTP Web Server para Velneo v7</h3>
+					<p>
+						<small>Created by <a href="http://hakim.se">Cristian Vasquez</a> / <a href="http://twitter.com/hakimel">@cristianvg</a></small>
+					</p>
+				</section>
+
+				<section>
+                <section>
+                  <h1>Conceptos básicos</h1>
+                </section>
+                <section>
+                      <h2>Velneo v7 y la Web</h2>
+                      <br/>
+                      <h3>Posibilidades</h3>
+                      <ul>
+                          <li>vModApache</li>
+                          <li>vODBC</li>
+                          <li>Replica otras DBs</li>
+                          <li>TCP</li>
+                      </ul>
+                </section>
+                <section>
+                        <h2>
+                          <img src="http://velneo.es/files/2009/10/vmodapache_xl1.png" alt="" style="vertical-align: middle;"/>
+                          vModApache
+                        </h2>
+                        <h3>Pros:</h3>
+                        <ul>
+                          <li>Cache</li>
+                          <li>Refrescos terciarios</li>
+                          <li>Escalabilidad (Apache)</li>
+                        </ul>
+                </section>
+                <section>
+                        <h2>
+                          <img src="http://velneo.es/files/2009/10/vmodapache_xl1.png" alt="" style="vertical-align: middle;"/>
+                          vModApache
+                        </h2>
+                        <h3>Contras:</h3>
+                        <ul>
+                          <li>No REST</li>
+                          <li>Consumo de Enganches</li>
+                          <li>No Router</li>
+                          <li>HTML armado en procesos</li>
+                          <li>No Layouts</li>
+                        </ul>
+                </section>
+                <section>
+                        <h2>
+                          <img src="http://velneo.es/files/2009/02/imagen-6.png" alt="" style="vertical-align: middle;"/>
+                          vODBC
+                        </h2>
+                        <ul>
+                          <li>Performance</li>
+                          <li>Beta</li>
+                          <li>Windows</li>
+                        </ul>
+                </section>
+                <section>
+                        <h2>Replicación</h2>
+                        <ul>
+                          <li>Compatibilidad Drivers y ORMS</li>
+                          <li>Mejor Performance</li>
+                          <li>Delicada sincronización</li>
+                          <li>Dobles costos</li>
+                        </ul>
+                </section>
+                <section>
+                        <h2>Objeto TCP</h2>
+                        <h3>Pros:</h3>
+                        <ul>
+                          <li>Rendimiento</li>
+                          <li>Windows + Linux</li>
+                          <li>Sin consumo de enganches</li>
+                        </ul>
+                </section>
+                <section>
+                        <h2>Objeto TCP</h2>
+                        <h3>Contras:</h3>
+                        <ul>
+                          <li>Difícil implementación de protocolos</li>
+                          <li>Modelado de abstracción</li>
+                        </ul>
+                </section>
+				</section>
+        <section>
+          <h3>Implementado Cirrus.js</h3>
+          <h4>1) El Protocolo HTTP </h4>
+          
+          <h4>Petición:</h4>
+					<pre><code>
+            GET /users/20/edit?param=1 HTTP/1.0\r\n
+            Accept: text/html\r\n
+            Host: velneo.es\r\n
+            Connection: keep-alive\r\n
+            Cache-Control: max-age=0\r\n
+					</code></pre>
+        </section>
+        <section>
+          <h3>Implementado Cirrus.js</h3>
+          <h4>1) El Protocolo HTTP </h4>
+          <h3>Respuesta:</h3>
+					<pre>
+              <code>
+                HTTP/1.1 200 OK\r\n
+                Server: nginx\r\n
+                Date: Thu, 20 Nov 2014 04:23:43 GMT\r\n
+                Content-Type: application/json\r\n
+                Transfer-Encoding: chunked\r\n
+                Connection: keep-alive\r\n
+                \r\n
+                "{"hello":"world"}"
+              </code>
+          </pre>
+        </section>
+        <section>
+          <h4>2) El objeto TCP de Velneo</h4>
+          <img src="https://s3.amazonaws.com/cirrusjsassets/objeto_tcp.png" alt="objeto_tcp" width="500" height="434"/>
+        </section>
+        <section>
+              <h2>Ciclo de Vida del request</h2>
+              <img src="https://s3.amazonaws.com/cirrusjsassets/cirrusflow.png" alt="proceso_tcp" class="no_border"/>
+        </section>
+        <section>
+          <h3>Proceso Cirrus.js</h3>
+          <img src="https://s3.amazonaws.com/cirrusjsassets/cirrus_proceso.png" alt="cirrus_proceso" width="650"/>
+        </section>
+        <section>
+          <h3>Código Objeto TCP</h3>
+          <img src="https://s3.amazonaws.com/cirrusjsassets/proceso_tcp.png" alt="proceso_tcp" />
+        </section>
+        <section>
+                <h2>Casos de Uso</h2>
+                <br/>
+                <ul>
+                  <li>
+                      Creación de REST API's
+                      <img src="https://s3.amazonaws.com/cirrusjsassets/swagger.png" alt="swagger" width="650"/>
+                  </li>
+
+                  <li>Servir HTML dinámico</li>
+                  <li>Integraciones vía XML</li>
+                </ul>
+        </section>
+        <section>
+              <h3>Arquitecturas de despliegue</h3>
+              <p><strong>1) Pura:</strong></p>
+              <img src="https://s3.amazonaws.com/cirrusjsassets/pura.png" alt="swagger" class="no_border"/>
+        </section>
+        <section>
+              <h3>Arquitecturas de despliegue</h3>
+              <p><strong>2) front-end framework:</strong></p>
+              <img src="https://s3.amazonaws.com/cirrusjsassets/front_end_framework.png" alt="swagger" class="no_border"/>
+        </section>
+        <section>
+              <h3>Arquitecturas de despliegue</h3>
+              <p><strong>1) Fron-end server + Cache</strong></p>
+              <img src="https://s3.amazonaws.com/cirrusjsassets/flujocompleto.png" alt="swagger" class="no_border"/>
+        </section>
+        <section id="mvc">
+              <h2>El MVC de Cirrus.js</h2>
+              <br/>
+              <ul>
+                <li><strong>Modelo:</strong>vRegister, vRegisterList</li>
+                <li><strong>Vista:</strong>HTML en base de datos, Handlebars</li>
+                <li><strong>Controlador:</strong>Código js estructurado en carpeta de scripts</li>
+              </ul>
+        </section>
+        <section>
+            <h2>Vistas</h2>
+            <img src="https://camo.githubusercontent.com/1ba82b6edbc74fed858b1f0f100eeebfbcc167c6/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6369727275736a736173736574732f68616e646c65626172732e706e67" alt="" id="mvc_vista"/>
+        </section>
+        <section>
+          <h2>Cirrus.js vs vModApache</h2>
+          <a href="https://github.com/Heavyblade/cirrus/wiki/performance" target="_blank">https://github.com/Heavyblade/cirrus/wiki/performance</a>
+        </section>
+        <section>
+            <h2>Cirrus.js</h2>
+            <h3>Pros</h3>
+            <ul>
+              <li>Implementación MVC</li>
+              <li>Router</li>
+              <li>Sessiones web</li>
+              <li>Acceso directo a Procesos y Busquedas</li>
+              <li>HTML creado directamente - no concatención de cadenas</li>
+              <li>No Consume Enganches</li>
+            </ul>
+        </section>
+        <section>
+            <h3>Contras</h3>
+            <ul>
+              <li>Solo soporte HTTP 1.0</li>
+              <li>OpenSource</li>
+            </ul>
+        </section>
+        <section>
+            <h2>vModApache</h2>
+            <h3>Pros</h3>
+            <ul>
+              <li>Implementación Directa en Apache</li>
+              <li>Cache y refrescos terciarios</li>
+              <li>Acceso directo a Procesos</li>
+              <li>Soporte Ofical - Pero no hay evolución</li>
+            </ul>
+        </section>
+        <section>
+            <h3>Contras</h3>
+            <ul>
+              <li>No router</li>
+              <li>Beta</li>
+              <li>Consumo de licencias</li>
+              <li>No manejo de sessiones</li>
+              <li>Disponible para > N3</li>
+              <li>Edicion de HTMl o JSON en procesos</li>
+            </ul>
+        </section>
+        <section>
+          <h1>Hello world</h1>
+          <h2>Instalacion</h2>
+        </section>
+        <section>
+          <h1>Cirrus.js en Profundidad</h1>
+          <h2>1) El Router</h2>
+        </section>
+        <section>
+              <h2>REST</h2>
+              <p>Representational State Transfer</p>
+              <br />
+              <p>Representación del recurso "user" en Rest:</p>
+              <br />
+              <ul class="task-list">
+                  <li>GET /users        =&gt;  "usersController#index"</li>
+                  <li>POST /users       =&gt;  "usersController#create"</li>
+                  <li>GET /users/new    =&gt;  "usersControlerr#new"</li>
+                  <li>GET /users/:id        =&gt;  "usersCotroller#show"</li>
+                  <li>GET /users/:id/edit   =&gt; "usersController#edit" </li>
+                  <li>PUT /users/:id        =&gt; "usersController#update"</li>
+                  <li>DELETE /users/:id     =&gt; "usersController#delete"</li>
+              </ul>
+        </section>
+
+        <section>
+          <h2>Declaración de rutas</h2>
+          <pre>
+              <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                  app/rutas.js
+                  wApp.addRoutes({
+                        "URL": "controller#action"
+                  });
+
+                  wApp.addRoutes({
+                        "GET /hello_world": "mainController#hello",
+                        "POST /add_hello:" "mainController#add"
+                  });
+              </code>
+          </pre>
+        </section>
+         <section>
+           <h2>Añadiendo parametros rutas:</h2>
+           <p>La notación ":" dentro de una ruta denota un parámetro</p>
+           <pre>
+              <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                  app/rutas.js
+                  wApp.addRoutes({
+                        "GET /users/:user_id/edit": "usersController#edit",
+                        "POST /add_hello:" "mainController#add"
+                  });
+              </code>
+            </pre>
+            <p>Se añade "user_id" a la lista global de parametros con su respectivo valor</p>
+         </section>
+         <section>
+           <h2>El orden si Importa</h2>
+           <p>Ante la colisión de rutas se toma la primera:</p>
+           <pre>
+              <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                  app/rutas.js
+                  wApp.addRoutes({
+                        "GET /users/:id": "usersController#edit",
+                        "GET /users/edad:" "mainController#edad"
+                  });
+              </code>
+            </pre>
+            <p>Un request "/users/edad", será tomado por la primera ruta haciendo set del parámetro "id" con valor "edad"</p>
+
+         </section>
+         <section>
+             <h2>Recursos REST</h2>
+             <pre>
+                <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                    app/rutas.js
+                    wApp.addRoutes({
+                          "resource users": "users"
+                    });
+                </code>
+              </pre>
+              <p>Automáticamente crea las 7 rutas REST para users</p>
+         </section>
+         <section>
+              <h2>Automapeo de tipo de datos en parametros</h2>
+              <a href="https://github.com/Heavyblade/cirrus/wiki/Router#detecci%C3%B3n-del-tipo-de-dato-y-entrega-al-proceso-o-b%C3%BAsqueda">https://github.com/Heavyblade/cirrus/wiki/Router#detecci%C3%B3n-del-tipo-de-dato-y-entrega-al-proceso-o-b%C3%BAsqueda</a>
+         </section>
+         <section>
+             <h1>Controllers</h1>
+             <p>los controladores son una extensión de objeto <strong>wApp</strong></p>
+
+             <p>Convención para nombrar controllers</p>
+             <pre>
+                <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                    /* /views/pedidos/pedidos_controller.js */
+                    wApp.usersController = {
+                              index: function(params) {
+                                     /* ..... tu Codigo aqui ..... */
+                                     return(some_json);
+
+                              },
+                              create: function(params) {
+                                     /* ..... tu Codigo aqui ..... */
+                                     return(some_json);
+                              },
+
+                    }
+                </code>
+              </pre>
+         </section>
+         <section>
+              <h2>Ubicación</h2>
+              <div class="container">
+                  <div class="left">
+                      <img src="https://camo.githubusercontent.com/fe04d6f206436b188d0d6ee34faf84da105626fb/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6369727275736a736173736574732f747265652e706e67" alt="controllers" />
+                  </div>
+                  <div class="right">
+                     <pre>
+                        <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                            wApp.addRoutes({ "resource pedidos": "pedidos" });
+                        </code>
+                      </pre>
+                      <ul class="small_list">
+                          <li>GET /pedidos        =&gt;  "pedidosController#index"</li>
+                          <li>POST /pedidos      =&gt;  "pedidosController#create"</li>
+                          <li>GET /pedidos/new    =&gt;  "pedidosControlerr#new"</li>
+                          <li>GET /pedidos/:id        =&gt;  "pedidosCotroller#show"</li>
+                          <li>GET /pedidos/:id/edit   =&gt; "pedidosController#edit" </li>
+                          <li>PUT /pedidos/:id        =&gt; "pedidosController#update"</li>
+                          <li>DELETE /pedidos/:id     =&gt; "pedidosController#delete"</li>
+                      </ul>
+                  </div>
+              </div>
+         </section>
+
+         <section>
+           <h2>Retorno del controller</h2>
+           <br />
+           <br />
+           <div class="left_text">
+                 <p>Los controllers en primera instancia deben retornar un json.</p>
+                 <h4>Keys espciales</h4>
+                 <ul>
+                   <li>redirect_to</li>
+                   <li>xml</li>
+                   <li>layout</li>
+                 </ul>
+           <br />
+           <br />
+           <p>Si el retorno es un <strong>string</strong> se entrega tal cual.</p>
+           </div>
+         </section>
+         <section>
+                  <h1>Vistas</h1>
+                  <p>Guardadas por el vServer en la tabla FILES y servidas desde FILES_MEM</p>
+                  <br />
+                  <br />
+                  <div class="left">
+                      <img src="https://camo.githubusercontent.com/fe04d6f206436b188d0d6ee34faf84da105626fb/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6369727275736a736173736574732f747265652e706e67" alt="controllers" />
+                  </div>
+                  <div class="right">
+                      <p>Un folder por cada controlador y un template estático o dinámico por cada acción</p>
+                  </div>
+         </section>
+         <section>
+           <h2>HTML Dinámico - Handlebars</h2>
+           <img src="http://handlebarsjs.com/images/handlebars_logo.png" alt="handlebars" class="no_border"/>
+         </section>
+         <section>
+           <h1>Sessiones</h1>
+           <h3>Como se almacenan ?</h3>
+           <div class="left_text">
+                 <p>
+                      HTTP/1.1 200 OK\r\n
+                      <br />
+                      Set-Cookie: v7App=base64json; Expires=Wed, 09 Jun 2021 10:18:14 GMT
+                 </p>
+                 <p style="text-align: center;">
+                   <img src="https://s3.amazonaws.com/cirrusjsassets/cookieroundtrip.png" alt="swagger" width="250" class="no_border"/>
+                 </p>
+           </div>
+         </section>
+         <section>
+           <h2>Trabajando con Sessiones</h2>
+           <p><strong>Guardar valor en session</strong></p>
+           <pre>
+              <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                  wApp.session.set("user_id", 10);
+              </code>
+            </pre>
+           <p><strong>Obtener Valor de session</strong></p>
+           <pre>
+              <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                  wApp.session.get("user_id");
+              </code>
+           </pre>
+         </section>
+         <section>
+              <h2>Definir duración de la session</h2>
+               <pre>
+                  <code data-trim contenteditable style="font-size: 18px; margin-top: 20px;">
+                      // valida hasta diciembre 31 de 2014
+                      var date = new Date(2014, 11, 31)
+                      wApp.session.set("expires", date)
+                  </code>
+               </pre>
+         </section>
+			</div>
+
+		</div>
+
+		<script src="public/javascripts/reveal/head.min.js"></script>
+		<script src="public/javascripts/reveal/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'public/javascripts/reveal/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'public/javascripts/reveal/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'public/javascripts/reveal/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'public/javascripts/reveal/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'public/javascripts/reveal/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'public/javascripts/reveal/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
+

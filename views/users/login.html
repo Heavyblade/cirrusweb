@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="ie ie6 lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie ie7 lt-ie9 lt-ie8"        lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie ie8 lt-ie9"               lang="en"> <![endif]-->
+<!--[if IE 9]>    <html class="ie ie9"                      lang="en"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en" class="no-ie">
+<!--<![endif]-->
+
+<head>
+   <!-- Meta-->
+   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+   <title>AtcalQuiz Login</title>
+   <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+   <!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script><![endif]-->
+
+   <!-- Bootstrap CSS-->
+   <link rel="stylesheet" href="/public/css/ifactstyles.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css">
+
+   <!-- App CSS-->
+   <link rel="stylesheet" href="/public/css/login.css">
+   <link rel="stylesheet" href="/public/css/common.css">
+
+   <!-- Modernizr JS Script-->
+   <script src="/public/javascripts/modernizr.js" type="application/javascript"></script>
+   <script src="/public/javascripts/fastclick.js" type="application/javascript"></script>
+</head>
+
+<body>
+   <!-- START wrapper-->
+   <div class="row row-table page-wrapper" style="background-color: #1b4068;">
+
+      <div class="col-lg-3 col-md-6 col-sm-8 col-xs-12 align-middle">
+         <div data-toggle="play-animation" data-play="fadeIn" data-offset="0" class="panel panel-dark b0">
+            <div class="panel-heading text-center p-lg" style="background-color: #fff;">
+              <a href="#" style="font-size: 18px; font-weight: bold;">
+                 <img src="http://www.vclouden.com/assets/logo_cirrus.png" alt="Image" class="block-center img-rounded" style="width: 50px">
+				 Cirrus.js
+              </a>
+            </div>
+            <div id="accordion" data-toggle="collapse-autoactive" class="panel-group">
+               <!-- START panel-->
+
+               <div class="panel radius-clear b0 shadow-clear">
+                  <div class="panel-heading radius-clear panel-heading-active" style="background-color: #122c48 !important;">
+                  <div id="invalidMail" style="display:none;" class="alert alert-info alert-dismissable" >
+                        <button style="font-size: 13px;" type="button" data-dismiss="alert" aria-hidden="true" class="close">x</button>
+                        <p style="font-size: 13px; font-weight: normal;" id="message">El correo no se encuentra registrado</p>
+                  </div>
+                  <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" class="text-muted btn-block text-center">Iniciar Session</a>
+                  </div>
+                  <div id="collapseOne" class="panel-collapse collapse in">
+                     <div class="panel-body">
+                        <form role="form" action="/create_session" method="POST" class="mb-lg">
+                           <div class="form-group has-feedback">
+                              <label for="exampleInputEmail1">Email</label>
+                              <input id="exampleInputEmail1"  name="email" type="text" placeholder="Entra tu email" class="form-control">
+                              <span class="fa fa-envelope form-control-feedback text-muted"></span>
+                           </div>
+                           <div class="form-group has-feedback">
+                              <label for="exampleInputPassword1">Contraseña</label>
+                              <input id="exampleInputPassword1" name="password" type="password" placeholder="Contraseña" class="form-control">
+                              <span class="fa fa-lock form-control-feedback text-muted"></span>
+                           </div>
+                           <div class="clearfix">
+                              <div class="checkbox c-checkbox pull-left mt0">
+                                 <label>
+                                    <input type="checkbox" name="term" value="">
+                                    <span class="fa fa-check"></span>Recuerdame</label>
+                              </div>
+                           </div>
+                           <button type="submit" class="btn btn-block btn-success">Login</button>
+                        </form>
+                     </div>
+                  </div>
+               </div>
+               <!-- END panel-->
+               <!-- START panel-->
+               <div class="panel radius-clear b0 shadow-clear">
+                  <div class="panel-heading radius-clear"><a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" class="text-muted btn-block text-center">No te has registrado?</a>
+                  </div>
+                  <div id="collapseTwo" class="panel-collapse collapse">
+                     <div class="panel-body">
+                        <form role="form" method="POST" action="/users" class="mb-lg">
+                           <div class="form-group has-feedback">
+                              <label for="signupInputEmail1">Email</label>
+                              <input id="signupInputEmail1" name="email" type="email" placeholder="Entrar Email" class="form-control">
+                              <span class="fa fa-envelope form-control-feedback text-muted"></span>
+                           </div>
+                           <div class="form-group has-feedback">
+                              <label for="signupInputPassword1">Contraseña</label>
+                              <input id="signupInputPassword1" name="password" type="password" placeholder="Contraseña" class="form-control">
+                              <span class="fa fa-lock form-control-feedback text-muted"></span>
+                           </div>
+                           <div class="form-group has-feedback">
+                              <label for="signupInputRePassword1">Repite Contraseña</label>
+                              <input id="signupInputRePassword1" type="password" placeholder="Repite Contraseña" class="form-control">
+                              <span class="fa fa-lock form-control-feedback text-muted"></span>
+                           </div>
+                           <div class="clearfix">
+                              <div class="checkbox c-checkbox pull-left mt0">
+                                 <label>
+                                    <input type="checkbox" name="terms" value="">
+                                    <span class="fa fa-check"></span>Estoy de acuerdo con los <a href="/terminos">terminos</a>
+                                 </label>
+                              </div>
+                           </div>
+                           <button type="submit" class="btn btn-block btn-success">Registrarse</button>
+                        </form>
+                     </div>
+                  </div>
+               </div>
+               <!-- END panel-->
+               <!-- START panel-->
+               <div class="panel radius-clear b0 shadow-clear">
+                  <div class="panel-heading radius-clear"><a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" class="text-muted btn-block text-center">Olvidaste tu password?</a>
+                  </div>
+                  <div id="collapseThree" class="panel-collapse collapse">
+                     <div class="panel-body">
+                        <form role="form" action="/recover_password" method="POST">
+                           <p class="text-center">Ingresa tu email para recibir instrucciones sobre el reseteo de tu contraseña.</p>
+                           <div class="form-group has-feedback">
+                              <label for="reset_email">Email</label>
+                              <input id="reset_email" name="reset_email" type="email" placeholder="Entra tu email" class="form-control">
+                              <span class="fa fa-envelope form-control-feedback text-muted"></span>
+                           </div>
+                           <button type="submit" class="btn btn-danger btn-block">Resetear</button>
+                        </form>
+                     </div>
+                  </div>
+               </div>
+               <!-- END panel-->
+            </div>
+         </div>
+      </div>
+   </div>
+   <!-- END wrapper-->
+   <!-- START Scripts-->
+   <!-- Main vendor Scripts-->
+   <script src="/public/javascripts/ifactpagesdependencies.js"></script>
+   <!-- Custom sript for pages-->
+   <script src="/public/javascripts/pages.js"></script>
+   <!-- END Scripts-->
+</body>
+
+</html>

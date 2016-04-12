@@ -1,0 +1,98 @@
+h3 {font-size: 40px; color: #333; font-weight: bold;}
+#nuevo_pedido, .cirrus {color: rgb(80,80,80);}
+body {background: url(https://s3.amazonaws.com/cirrusjsassets/black_lozenge.png) repeat;}
+.container {background-color: white; border-radius: 10px; padding: 10px; padding-top: 20px;}
+.jumbotron {padding-top: 10px; padding-bottom: 10px; margin-left: 30px; margin-right: 30px;}
+.new_pedido label, .new_pedido input {text-align: left;}
+.header h3 span {font-size: 12px;}
+
+    	/* Space out content a bit */
+		body {
+		  padding-top: 20px;
+		  padding-bottom: 20px;
+		}
+
+		/* Everything but the jumbotron gets side spacing for mobile first views */
+		.header,
+		.marketing,
+		.footer {
+		  padding-left: 15px;
+		  padding-right: 15px;
+		}
+
+		/* Custom page header */
+		.header {
+		  border-bottom: 1px solid #e5e5e5;
+		}
+		/* Make the masthead heading the same height as the navigation */
+		.header h3 {
+		  margin-top: 0;
+		  margin-bottom: 0;
+		  line-height: 40px;
+		  padding-bottom: 19px;
+		}
+
+		/* Custom page footer */
+		.footer {
+		  padding-top: 19px;
+		  color: #777;
+		  border-top: 1px solid #e5e5e5;
+		}
+
+		/* Customize container */
+		@media (min-width: 768px) {
+		  .container {
+		    max-width: 910px;
+		  }
+		}
+		.container-narrow > hr {
+		  margin: 30px 0;
+		}
+
+		/* Main marketing message and sign up button */
+		.jumbotron {
+		  text-align: center;
+		  border-bottom: 1px solid #e5e5e5;
+		}
+		.jumbotron .btn {
+		  font-size: 21px;
+		  padding: 14px 24px;
+		}
+
+		/* Supporting marketing content */
+		.marketing {
+		  margin: 40px 0;
+		}
+		.marketing p + h4 {
+		  margin-top: 28px;
+		}
+
+		/* Responsive: Portrait tablets and up */
+		@media screen and (min-width: 768px) {
+		  /* Remove the padding we set earlier */
+		  .header,
+		  .marketing,
+		  .footer {
+		    padding-left: 0;
+		    padding-right: 0;
+		  }
+		  /* Space out the masthead */
+		  .header {
+		    margin-bottom: 30px;
+		  }
+		  /* Remove the bottom border on the jumbotron for visual effect */
+		  .jumbotron {
+		    border-bottom: 0;
+		  }
+        }
+		
+#crear_tarea {
+    padding: 20px;
+    background-color: rgb(230,230,230);
+    border: 1px solid rgb(220,220,220);
+    border-radius: 5px;
+}
+
+form {
+padding: 20px; background-color: rgb(240,240,240); border: 1px solid rgb(230,230,230)    
+    }

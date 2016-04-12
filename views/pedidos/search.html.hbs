@@ -1,0 +1,23 @@
+<h1 id="title_pedidos">Lista de Pedidos</h1>
+<table class="table table-striped">
+    <thead>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Valor</th>
+        <th>action</th>
+    </thead>
+    <tbody>
+        {{#each pedidos}}
+        <tr>
+            <td>{{cliente}}</td>
+            <td>{{fecha}}</td>
+            <td>{{valor}}</td>
+            <td id="cosa">
+                <a data-target="#myModal" href="/pedidos/{{id}}/edit" class="btn btn-primary btn-xs">Editar</a>
+                <a class="btn btn-default btn-xs delete_pedido" href="/pedidos/{{id}}" >Borrar</a>
+            </td>
+        </tr>
+        {{/each}}
+        
+    </tbody>
+</table>
