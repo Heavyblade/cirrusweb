@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Cirrus Demo</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="/public/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="/public/css/bootstrap-treeview.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="/public/css/sb-admin-2.css" rel="stylesheet">
+	<link href="/public/css/jsgrid.min.css" rel="stylesheet">
+	<link href="/public/css/jsgrid-theme.min.css" rel="stylesheet">
+	<link href="/public/css/datepicker/bootstrap-datetimepicker.min.css" rel="stylesheet">
+	
+	<link href="/public/css/cirrus_dat.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- jQuery -->
+    <script src="/public/javascripts/jquery.min.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	<style>
+
+		@media(min-width:768px) {
+			#page-wrapper {
+				padding: 0px;
+			}
+		}
+	</style>
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">
+                    <img src="https://s3.amazonaws.com/cirrusjsassets/Logo+CIrrus.png" style="display: inline; width: 30px;">
+                    Cirrus.js
+                </a>
+
+            </div>
+            <!-- /.navbar-header -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-search">
+                    <div class="input-group custom-search-form">
+                        <input id="searchTerm" type="text" class="form-control" placeholder="Filtrar">
+                        <span class="input-group-btn">
+                            <button id="searchTable" class="btn btn-default" type="button">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <!-- /input-group -->
+                </div>
+                  <div id="tree"></div>
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        #yield
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title">Modal title</h4>
+          </div>
+          <div class="modal-body">
+            <div class="te"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+            <button id="save_pedido" type="button" class="btn btn-primary">Guardar</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="/public/javascripts/bootstrap.min.js"></script>
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="/public/javascripts/bootstrap-treeview.min.js"></script>
+    <script src="/public/javascripts/undescore.min.js"></script>
+	<script src="/public/javascripts/jsgrid.min.js"></script>
+	<script src="/public/javascripts/datepicker/moment-with-locales.js"></script>
+	<script src="/public/javascripts/datepicker/bootstrap-datetimepicker.min.js"></script>
+	<script src="/public/javascripts/cirrus_dat.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $.ajax({type: "GET",
+                   dataType: "json",
+                   url: "/metadata.json",
+                   success: function(result) {
+							window.metadata = result.metadata;
+                            var grouped   = _.groupBy(result.metadata, function(item) { return(item.project); }),
+                                keys      = Object.keys(grouped),
+                                i         = keys.length,
+                                treeData  = [];
+
+                            for( z=0; z < i; z++ ) {
+                                var key = keys[z];
+                                var tables = _.map(grouped[key], function(item){ return({href: ("#" + item.id.replace(".", "")),icon: "glyphicon glyphicon-folder-close", text: " " + (item.name || item.singleName)}); });
+                                treeData.push({text: key, state: {expanded: (z==0)}, color: "#583F7E", icon: "glyphicon glyphicon-book", nodes: tables});
+                            }
+
+                            $('#tree').treeview({color: "#428bca", 
+												 data: treeData,
+												 backColor: "transparent",
+												 showBorder: false,
+												 searchResultBackColor: "#53c1a2",
+												 searchResultColor: "#FFF"});
+							$('#tree').on('nodeSelected', function(event, data) {
+								loadTable(data)
+							});
+                   }
+            });
+            $("#searchTable").on("click", function(){
+                  var value = $("#searchTerm").val();
+                  $('#tree').treeview('search', [ value, {
+                    ignoreCase: true,     // case insensitive
+                    exactMatch: false,    // like or equals
+                    revealResults: true,  // reveal matching nodes
+                  }]);
+            });
+        });
+
+    </script>
+</body>
+
+</html>
