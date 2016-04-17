@@ -18,3 +18,15 @@
 .jsGrid {
 	min-height: 600px;
 }
+
+.node-icon.glyphicon-book + .check-icon {
+	display: none;
+}
+
+.node-icon.glyphicon-folder-close + .check-icon {
+	display: none;
+}
+
+.check-icon + li {
+	font-size: 10px;
+}

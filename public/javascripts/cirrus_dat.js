@@ -1,4 +1,5 @@
 function loadTable(data) {
+		if ( _.isUndefined(data.href) ) { return; } 
 		var tableMetadata = getMetadata(data.href.replace("#", ''));
 
 		var baseOptions = {
@@ -17,7 +18,13 @@ function loadTable(data) {
 		
 		baseOptions.fields = buildFields(tableMetadata);
 		baseOptions.fields.push({type: "control"});
-		baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""));
+		var neededFields = getNeededFields(tableMetadata);
+		
+		if ( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) {
+			baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), neededFields.join(","));
+		} else {
+			baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""));
+		}		
 		
 		var id = tableMetadata.id.replace("/", "").replace(".", "") + Date.now();
 		
@@ -29,10 +36,11 @@ function loadTable(data) {
 		$('#' + id).tab('show')		
 }
 
-function buildLoadData(idRef) {
+function buildLoadData(idRef, fields) {
 	console.log(idRef);
 	return({
 		loadData: function(filter) {
+			if (fields) { filter.fields = fields; }
 			return $.ajax({
 				type: "GET",
 				url: ("/api/v1/" + idRef),
@@ -75,80 +83,37 @@ function getMetadata(tableId) {
 }
 
 function buildFields(table) {
-	var fields = _.map(table.fields, function(item){
-		var field = {name: item.id, title: item.name, width: 100, type: getjsGridType(item.type)}
-		if ( item.type == 10 ) { field.title = item.name;}
-		return field;
-	});
-	return fields;
+	return _.chain(table.fields)
+			.where({hidden: false})
+			.map(function(item) { return {name: item.id, title: item.name, width: 100, type: getjsGridType(item.type)}; })
+			.value()
+}
+function getNeededFields(metadata) {
+	return _.chain(metadata.fields)
+			.map(function(item) { if ( !item.hidden ) { return item.id; } })
+			.compact()
+			.value()
 }
 
 function getjsGridType(type) {
-  var intType = parseInt(type);
-  var result;
-  switch (intType) {
-    case 0:
-       result = "text";
-       break;
-    case 1:
-       result = "text";
-       break;
-    case 2:
-       result = "text";
-       break;
-    case 3:
-       result = "text";
-       break;
-    case 4:
-       result = "text";
-       break;
-    case 5:
-       result = "text";
-       break;
-    case 6:
-       result = "text";
-       break;
-    case 7:
-       result = "customDate";
-       break;
-    case 8:
-       result = "customTime";
-       break;
-    case 9:
-       result = "customDateTime";
-       break;
-    case 10:
-       result = "checkbox";
-       break;
-    case 11:
-       result = "";
-       break;
-    case 12:
-       result = "";
-       break;
-    case 13:
-       result = "";
-       break;
-    case 14:
-       result = "";
-       break;
-    case 15:
-       result = "";
-       break;
-    case 18:
-       result = "";
-       break;
-	case 111:
-	   result = "textarea";
-	   break;
-	case 112:
-	   result = "textarea";
-	   break;
-    default:
-       result = "text";
-       break;
-  }
-  return(result);
+  var intType = parseInt(type),
+	  types   = {
+				0: "text",
+				1: "text",
+				2: "text",
+				3: "text",
+				4: "text",
+				5: "text",
+				6: "number",
+				7: "customDate",
+				8: "customTime",
+				9: "customDateTime",
+				10: "checkbox",
+				111: "customTextArea",
+				112: "customTextArea",	
+				};
+  
+  return(types[intType] || "");
 }
 
 function bindCloseTab() {
@@ -261,10 +226,56 @@ function addTimeType() {
     jsGrid.fields.customTime = MyDateField;		
 }
 
+function addCustomTextArea() {
+	var MyDateField = function(config) {
+        jsGrid.Field.call(this, config);
+    };
+ 
+    MyDateField.prototype = new jsGrid.Field({
+        sorter: function(string1, string2) {
+            return string1 > string2
+        },
+ 
+        itemTemplate: function(value) {
+            return value.slice(0, 100);
+        },
+ 
+        insertTemplate: function(value) {
+            return this._insertPicker = $("<textarea rows='7' class='form-control'></textarea>");
+        },
+ 
+        editTemplate: function(value) {
+			console.log(value)
+			return this._editPicker = $("<textarea rows='7' class='form-control'>" + value + "</textarea>");
+        },
+ 
+        insertValue: function() {
+            return this._insertPicker.val();
+        },
+ 
+        editValue: function() {
+            return this._editPicker.val();
+        }
+    });
+ 
+    jsGrid.fields.customTextArea = MyDateField;	
+}
+
+function addFieldToRender(event, node) {
+	var parent   = $('#tree').treeview('getParent', node),
+		tableId  = parent.href.replace("#", ""),
+		metadata = getMetadata(tableId),
+		fieldId  = node.fieldId,
+		field    = _.find(metadata.fields, function(item) { return item.id == fieldId });
+	
+	field.hidden = !field.hidden;
+}
+
 $(document).ready(function(){
 	 addDateType();
 	 addDateTimeType();
 	 addTimeType();
+	 addCustomTextArea()
 	$(".tab-close").on("click", bindCloseTab);	
 });
 

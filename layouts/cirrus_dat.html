@@ -142,22 +142,33 @@
                             var grouped   = _.groupBy(result.metadata, function(item) { return(item.project); }),
                                 keys      = Object.keys(grouped),
                                 i         = keys.length,
-                                treeData  = [];
+                                treeData  = [],
+								fields    = [];
 
                             for( z=0; z < i; z++ ) {
                                 var key = keys[z];
-                                var tables = _.map(grouped[key], function(item){ return({href: ("#" + item.id.replace(".", "")),icon: "glyphicon glyphicon-folder-close", text: " " + (item.name || item.singleName)}); });
-                                treeData.push({text: key, state: {expanded: (z==0)}, color: "#583F7E", icon: "glyphicon glyphicon-book", nodes: tables});
+								
+                                var tables = _.map(grouped[key], function(item){ 
+									fields = _.map(item.fields, function(field) { return({text: field.name, fieldId: field.id, tags: ['hola'], state: { checked: true}}); });
+									return({href: ("#" + item.id.replace(".", "")),icon: "glyphicon glyphicon-folder-close", text: " " + (item.name || item.singleName), nodes: fields});
+								});
+                                treeData.push({text: key, state: {expanded: (z==0)}, selectable: false, color: "#583F7E", icon: "glyphicon glyphicon-book", nodes: tables});
                             }
 
                             $('#tree').treeview({color: "#428bca", 
 												 data: treeData,
 												 backColor: "transparent",
 												 showBorder: false,
+												 showCheckbox: true,
 												 searchResultBackColor: "#53c1a2",
-												 searchResultColor: "#FFF"});
+												 searchResultColor: "#FFF",
+												 onNodeChecked: addFieldToRender,
+												 onNodeUnchecked: addFieldToRender
+							});
+
 							$('#tree').on('nodeSelected', function(event, data) {
-								loadTable(data)
+								loadTable(data);
+								return false;
 							});
                    }
             });
