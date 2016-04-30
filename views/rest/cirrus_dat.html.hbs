@@ -1,8 +1,6 @@
 <!-- Nav tabs -->
-
 <br/>
 <ul class="nav nav-tabs" role="tablist">
-
 </ul>
 
 <!-- Tab panes -->
@@ -10,4 +8,33 @@
 
 </div>
  
+<script type="text/template" id="tabTemplate">
+	<li role='presentation'>
+		<a id='<%= id %>' href='#content<%= id %>' aria-controls='home' role='tab' data-toggle='tab'>
+			<%= name %>
+			<i class='tab-close glyphicon glyphicon-remove'/>
+		</a>
+	</li>
+</script>
 
+<script type="text/template" id="contentTemplate">
+	<div id='content<%= id %>' role='tabpanel' class='tab-pane'>
+		<div class="modeWrapper">
+				<div class='mode'>
+						<div class="btn-group" data-toggle="buttons">
+						  <label class="btn btn-primary <%= mode == "navigation" ? "active" : "" %>">  
+							<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
+							<i class='glyphicon glyphicon-ok'/>
+						  </label>
+						  <label class="btn btn-success <%= mode == "editing" ? "active" : "" %>">
+							<input type="radio" name="options_<%= id %>" id="edit_<%= id %>" autocomplete="off" >Edición
+							<i class='glyphicon glyphicon-ok'/>
+						  </label>
+						</div>
+				</div>
+
+				<div id='pager<%= id %>'/>
+		</div>
+		<div class='jsGrid' id='grid<%= id %>'/>
+	</div>
+</script>

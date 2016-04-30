@@ -13,13 +13,15 @@
 
 .jsgrid-row td, .jsgrid-alt-row td {
 	overflow: hidden !important;
+	font-size: 12px !important;
 }
 
 .jsGrid {
-	min-height: 600px;
+	min-height: 600px !important;
+	width: 100% !important;
 }
 
-.node-icon.glyphicon-book + .check-icon {
+.node-icon.glyphicon-book + .check-icon, .node-icon.glyphicon-hdd  + .check-icon, .node-icon.glyphicon-bookmark + .check-icon {
 	display: none;
 }
 
@@ -29,4 +31,21 @@
 
 .check-icon + li {
 	font-size: 10px;
+}
+
+.mode {
+	float: right;
+}
+
+.modeWrapper {
+	overflow: hidden;
+	margin-bottom: 20px;	
+}
+
+.modeWrapper .btn .glyphicon {
+	display: none;
+}
+
+.modeWrapper .btn.active .glyphicon {
+	display: inline;
 }

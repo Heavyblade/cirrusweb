@@ -1,50 +1,89 @@
-function loadTable(data) {
-		if ( _.isUndefined(data.href) ) { return; } 
-		var tableMetadata = getMetadata(data.href.replace("#", ''));
-
-		var baseOptions = {
-			width: 	     '100%',
-			height:      "auto",
-			autoload:    true,
-			inserting:   true,
-			editing:     true,
-			sorting:   	 true,
-			paging:    	 true,
-			pageLoading: true,
-			loadIndication: true,
-			loadIndicationDelay: 300,
-			deleteConfirm: "Estas seguro de eliminar este registro?",
-		};
-		
-		baseOptions.fields = buildFields(tableMetadata);
-		baseOptions.fields.push({type: "control"});
-		var neededFields = getNeededFields(tableMetadata);
-		
-		if ( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) {
-			baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), neededFields.join(","));
-		} else {
-			baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""));
-		}		
-		
-		var id = tableMetadata.id.replace("/", "").replace(".", "") + Date.now();
-		
-		$("<li role='presentation'><a id='" + id + "' href='#content" + id + "' aria-controls='home' role='tab' data-toggle='tab'>" + tableMetadata.name + "<i class='tab-close glyphicon glyphicon-remove'></i></a></li>").appendTo(".nav-tabs");
-		$("<div id='content" + id + "' role='tabpanel' class='tab-pane' id='messages'><div class='jsGrid' id=grid" + id + "></div></div>").appendTo(".tab-content");
-
-		$("#grid" + id).jsGrid(baseOptions);
-		$(".tab-close").on("click", bindCloseTab);
-		$('#' + id).tab('show')		
+function existy(x) {
+  return x != null;
 }
 
-function buildLoadData(idRef, fields) {
-	console.log(idRef);
+function cat() {
+  var head = _.first(arguments);
+
+  if (existy(head))
+    return head.concat.apply(head, _.rest(arguments));
+  else
+    return [];
+}
+
+function construct(head, tail) {
+  return cat([head], _.toArray(tail));
+}
+
+/**
+* @method loadTable
+* Este metodo es el responsable por tomar el item de un nodo seleccionado
+* y cargar un nuevo tab con los contenidos de la tabla correspondiente.
+* @param data {object} - Objeto correpondiente al nodo seleccionado.
+*/
+function loadTable(data) {
+		console.log(data);
+		if ( _.isUndefined(data.href) || _.isUndefined(data.indexId) ) { return; }
+
+		var params 		  = { index: data.indexId },
+			tableMetadata = getMetadata(data.href.replace("#", '')),
+		    id 			  = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
+			index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId }),
+			neededFields  = getNeededFields(tableMetadata, index.parts),
+			baseOptions   = { width: 	     	'auto',
+							  height:      		'auto',
+							  autoload:    		true,
+							  inserting:   		true,
+							  editing:     		tableMetadata.editable,
+							  sorting:   	 	true,
+							  paging:    	 	true,
+							  pageLoading: 		true,
+							  loadIndication: 	true,
+							  loadIndicationDelay: 300,
+							  multiselect:      true,
+							  deleteConfirm: "Estas seguro de eliminar este registro?"
+							};
+
+		if ( data.indexType == 1 || data.indexType == 4 ) {
+			var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
+			if ( resolve ) {
+				params.indexResolve = resolve;
+			} else {
+				alert("No pueden obtenerse datos sin valores para la resolución del indice")
+			}
+		}
+
+		baseOptions.fields 		   = buildFields(tableMetadata);
+		baseOptions.pagerContainer = "#pager" + id;
+		if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
+		baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index);
+		
+		$(_.template($("#tabTemplate").html())({id: id, name: tableMetadata.name})).appendTo(".nav-tabs");
+		$(_.template($("#contentTemplate").html())({id: id, mode: tableMetadata.editable ? "editing" : "navigation"})).appendTo(".tab-content");
+	
+		$("#grid" + id).jsGrid(baseOptions);
+		$(".tab-close").on("click", bindCloseTab);
+		$('#' + id).tab('show');
+
+		$("input[name=options_" + id + "]").on("change", toggleEditing);
+}
+
+/**
+* @method buildLoadData
+* Este metodo crea las promises de los end-points que serviran al grid que representa la tabla
+*
+* @param idRef {string} - el id de la tabla que se corresponde con el end-point respetando
+* la convencio solucionvdc/tabla que tiene velneo
+* @param fields {Array[string]} - Representa los campos que se desean traer de la tabla en cuestion.
+* @param index {object} - Un objeto indice proveniente de la metadata de la tabla tal cual llega de back end.
+*/
+function buildLoadData(idRef, params, index) {
 	return({
 		loadData: function(filter) {
-			if (fields) { filter.fields = fields; }
 			return $.ajax({
 				type: "GET",
-				url: ("/api/v1/" + idRef),
-				data: filter,
+				url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
+				data: _.extend(filter, params),
 				dataType: "json"
 			});
 		},
@@ -52,25 +91,30 @@ function buildLoadData(idRef, fields) {
 		insertItem: function(item) {
 			return $.ajax({
 				type: "POST",
-				url: ("/api/v1/" + idRef),
+				url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
 				data: item,
 				dataType: "json"
 			});
 		},
 		
 		updateItem: function(item) {
+			var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
+				paramParts  = _.map(parts, function(item){ return "parts=" + item }).join("&");				
+			
 			return $.ajax({
 				type: "PUT",
-				url: ("/api/v1/" + idRef + "/" + item.id),
+				url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
 				data: item,
 				dataType: "json"
 			});
 		},
 		
 		deleteItem: function(item) {
+			var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
+				paramParts  = _.map(parts, function(item){ return "parts=" + item }).join("&");
 			return $.ajax({
 				type: "DELETE",
-				url: ("/api/v1/" + idRef + "/" + item.id),
+				url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
 				data: item,
 				dataType: "json"
 			});
@@ -83,34 +127,67 @@ function getMetadata(tableId) {
 }
 
 function buildFields(table) {
-	return _.chain(table.fields)
-			.where({hidden: false})
-			.map(function(item) { return {name: item.id, title: item.name, width: 100, type: getjsGridType(item.type)}; })
-			.value()
+	var fields = _.chain(table.fields)
+				 .where({hidden: false})
+				 .map(function(item) {
+					var gridType = getjsGridType(item.type);
+					return {name: item.id, title: item.name, width: (item.id == "ID" ? 60: gridType[1]), type: gridType[0] };
+				 })
+				 .value()
+
+	fields.push({type: "control", width: (table.editable ? 100 : 50), editButton: table.editable, deleteButton: table.editable });
+	fields.unshift(customSelector());
+	return(fields);
 }
-function getNeededFields(metadata) {
+function getNeededFields(metadata, parts) {	
 	return _.chain(metadata.fields)
-			.map(function(item) { if ( !item.hidden ) { return item.id; } })
+			.map(function(item) {
+						var esta = parts.indexOf(item.id) > -1;
+
+						if ( item.hidden == false || esta ) {
+							return item.id; 
+						} 
+			})
 			.compact()
 			.value()
+}
+
+function customSelector() {
+	return({headerTemplate: function() {
+				return $("<input type='checkbox'>")
+						.on("click", function (event) {
+							$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked", !$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked"));
+							event.stopPropagation();
+						});
+			},
+			itemTemplate: function(_, item) {	  
+				return $("<input type='checkbox' class='selectCheck'>")
+						.on("change", function (event) {
+							event.stopPropagation();
+						});
+			},
+			align: "center",
+			width: 50,
+			height: 50
+    });
 }
 
 function getjsGridType(type) {
   var intType = parseInt(type),
 	  types   = {
-				0: "text",
-				1: "text",
-				2: "text",
-				3: "text",
-				4: "text",
-				5: "text",
-				6: "number",
-				7: "customDate",
-				8: "customTime",
-				9: "customDateTime",
-				10: "checkbox",
-				111: "customTextArea",
-				112: "customTextArea",	
+				0:   ["text", 200],
+				1:   ["text", 200],
+				2:   ["text", 200],
+				3:   ["text", 200],
+				4:   ["text", 200],
+				5:   ["text", 200],
+				6:   ["number", 110],
+				7:   ["customDate", 100],
+				8:   ["customTime", 70],
+				9:   ["customDateTime", 130],
+				10:  ["checkbox", 60],
+				111: ["customTextArea",200],
+				112: ["customTextArea", 200]
 				};
   
   return(types[intType] || "");
@@ -120,7 +197,25 @@ function bindCloseTab() {
 	var contentSelector = $(this).parent().attr("href");
 	$(contentSelector).remove();
 	$(this).parent().remove();
+	if ( $(".nav-tabs li a").length > 0 ) {
+		$($(".nav-tabs li a")[$(".nav-tabs li a").length-1]).tab("show");
+	}
 	return(false);
+}
+
+function toggleEditing() {
+	var id 		= $(this).attr("id").split("_")[1],
+		element = $(this).attr("id").split("_")[0];
+	
+	if ( element == "edit" ) {
+		$("#grid" + id).jsGrid("option", "editing", true);
+		$("#grid" + id + " .jsgrid-grid-header tr th:first-child").hide();
+		$("#grid" + id + " .jsgrid-grid-body tr td:first-child").hide();
+	} else {
+		$("#grid" + id).jsGrid("option", "editing", false);
+		$("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
+		$("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
+	}	
 }
 
 function addDateType() {
@@ -237,7 +332,7 @@ function addCustomTextArea() {
         },
  
         itemTemplate: function(value) {
-            return value.slice(0, 100);
+            return _.escape(value.slice(0, 30));
         },
  
         insertTemplate: function(value) {
@@ -263,6 +358,7 @@ function addCustomTextArea() {
 
 function addFieldToRender(event, node) {
 	var parent   = $('#tree').treeview('getParent', node),
+		parent   = $('#tree').treeview('getParent', parent),
 		tableId  = parent.href.replace("#", ""),
 		metadata = getMetadata(tableId),
 		fieldId  = node.fieldId,
@@ -278,4 +374,3 @@ $(document).ready(function(){
 	 addCustomTextArea()
 	$(".tab-close").on("click", bindCloseTab);	
 });
-

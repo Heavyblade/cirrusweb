@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Cirrus Demo</title>
+    <title>CirrusDat</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="/public/css/bootstrap.min.css" rel="stylesheet">
@@ -52,25 +52,12 @@
     <div id="wrapper">
 
         <!-- Navigation -->
-        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="index.html">
-                    <img src="https://s3.amazonaws.com/cirrusjsassets/Logo+CIrrus.png" style="display: inline; width: 30px;">
-                    Cirrus.js
-                </a>
+        <nav class="navbar navbar-default" role="navigation" style="margin-bottom: 0; min-height: 0px;">
 
-            </div>
-            <!-- /.navbar-header -->
-
-            <div class="navbar-default sidebar" role="navigation">
+            <div class="navbar-default sidebar" role="navigation" style="background-color: transparent; border-color: transparent; margin-top: 0px;">
                 <div class="sidebar-search">
-                    <div class="input-group custom-search-form">
+					<h1 style="margin-top: 0px;">CirrusDat</h1>
+                    <div class="input-group custom-search-form">					
                         <input id="searchTerm" type="text" class="form-control" placeholder="Filtrar">
                         <span class="input-group-btn">
                             <button id="searchTable" class="btn btn-default" type="button">
@@ -135,9 +122,9 @@
     <script type="text/javascript">
         $(document).ready(function(){
             $.ajax({type: "GET",
-                   dataType: "json",
-                   url: "/metadata.json",
-                   success: function(result) {
+                    dataType: "json",
+                    url: "/metadata.json",
+                    success: function(result) {
 							window.metadata = result.metadata;
                             var grouped   = _.groupBy(result.metadata, function(item) { return(item.project); }),
                                 keys      = Object.keys(grouped),
@@ -149,28 +136,55 @@
                                 var key = keys[z];
 								
                                 var tables = _.map(grouped[key], function(item){ 
-									fields = _.map(item.fields, function(field) { return({text: field.name, fieldId: field.id, tags: ['hola'], state: { checked: true}}); });
-									return({href: ("#" + item.id.replace(".", "")),icon: "glyphicon glyphicon-folder-close", text: " " + (item.name || item.singleName), nodes: fields});
+													fields =[{	text: "Campos", 
+																icon: "glyphicon glyphicon-folder-close", 
+																nodes: _.map(item.fields, function(field) { 
+																			return({text: 		field.name, 
+																					selectable: false, 
+																					fieldId: 	field.id, 
+																					state: 		{ checked: true}});
+																})
+															 },
+															 {	text: "Indices",
+																icon: "glyphicon glyphicon-folder-close",
+																nodes: _.map(item.indexes, function(index) {
+																			return({ href:  	 ("#" + item.id.replace(".", "")), 
+																					 text: 		 (" " + index.id),
+																					 indexType:  index.type,
+																					 selectable: true, 
+																					 indexId: 	 index.id,
+																					 parts:      index.parts,
+																					 icon: 		 "glyphicon glyphicon-bookmark"});
+																})
+															 }];
+													var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
+													return({href:      ("#" + item.id.replace(".", "")),
+															icon:      "glyphicon glyphicon-folder-close",
+															text:      " " + (item.name || item.singleName),
+															tableType: item.tableTtype,
+															indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
+															nodes:     fields});
 								});
-                                treeData.push({text: key, state: {expanded: (z==0)}, selectable: false, color: "#583F7E", icon: "glyphicon glyphicon-book", nodes: tables});
+                                treeData.push({text:       key, 
+											   state: 	   {expanded: (z==0)},
+											   selectable: false,
+											   color:      "#583F7E",
+											   icon:       "glyphicon glyphicon-hdd",
+											   nodes:      tables});
                             }
 
-                            $('#tree').treeview({color: "#428bca", 
-												 data: treeData,
-												 backColor: "transparent",
-												 showBorder: false,
-												 showCheckbox: true,
+                            $('#tree').treeview({color: 				"#428bca", 
+												 data: 					treeData,
+												 backColor: 			"transparent",
+												 showBorder: 			false,
+												 showCheckbox: 			true,
 												 searchResultBackColor: "#53c1a2",
-												 searchResultColor: "#FFF",
-												 onNodeChecked: addFieldToRender,
-												 onNodeUnchecked: addFieldToRender
+												 searchResultColor: 	"#FFF",
+												 onNodeChecked: 		addFieldToRender,
+												 onNodeUnchecked: 		addFieldToRender,
+												 onNodeSelected: 		function(event, data) {	loadTable(data); return false; }
 							});
-
-							$('#tree').on('nodeSelected', function(event, data) {
-								loadTable(data);
-								return false;
-							});
-                   }
+                    }
             });
             $("#searchTable").on("click", function(){
                   var value = $("#searchTerm").val();
