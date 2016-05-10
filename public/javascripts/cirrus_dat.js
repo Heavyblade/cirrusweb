@@ -34,11 +34,12 @@ function loadTable(data) {
 							  height:      		'auto',
 							  autoload:    		true,
 							  inserting:   		true,
-							  editing:     		tableMetadata.editable,
+							  editing:     		false,
 							  sorting:   	 	true,
 							  paging:    	 	true,
 							  pageLoading: 		true,
 							  loadIndication: 	true,
+							  rowClick:         rowClickHandler(id),
 							  loadIndicationDelay: 300,
 							  multiselect:      true,
 							  deleteConfirm: "Estas seguro de eliminar este registro?"
@@ -53,19 +54,28 @@ function loadTable(data) {
 			}
 		}
 
-		baseOptions.fields 		   = buildFields(tableMetadata);
+		baseOptions.fields 		   = buildFields(tableMetadata, index, id);
 		baseOptions.pagerContainer = "#pager" + id;
 		if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
+		if ( data.ids ) { params.ids = data.ids; }
 		baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index);
 		
+		if ( _.isUndefined( window.selected )) { window.selected = {};}
+		window.selected[id] = [];
+		
 		$(_.template($("#tabTemplate").html())({id: id, name: tableMetadata.name})).appendTo(".nav-tabs");
-		$(_.template($("#contentTemplate").html())({id: id, mode: tableMetadata.editable ? "editing" : "navigation"})).appendTo(".tab-content");
+		$(_.template($("#contentTemplate").html())({id: id,
+													mode: tableMetadata.editable ? "editing" : "navigation", 
+													isMaster: tableMetadata.tableType == 0 || tableMetadata.tableType == 3,
+													editable: tableMetadata.editable})).appendTo(".tab-content");
 	
 		$("#grid" + id).jsGrid(baseOptions);
 		$(".tab-close").on("click", bindCloseTab);
 		$('#' + id).tab('show');
 
 		$("input[name=options_" + id + "]").on("change", toggleEditing);
+		$("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
+		$("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
 }
 
 /**
@@ -122,11 +132,46 @@ function buildLoadData(idRef, params, index) {
 	});
 }
 
-function getMetadata(tableId) {
-	return(_.find(window.metadata, function(item){ return item.id.replace(".", "") == tableId }));
+
+/**
+ * @function rowClickHandler
+ * Create a closure to create global variable that will hold
+ * the selected items on the grid
+ * @param id {string} The id create for the current grid
+ */
+function rowClickHandler(id) {
+	return function(e) {
+			var ev 		  = e.event,
+				item  	  = e.item,
+				itemIndex = e.itemIndex;
+			
+			if ( $(ev.target).attr("class") == "selectCheck" ) {
+				if ( window.selected[id].indexOf(itemIndex) !== -1 ) {
+					window.selected[id].splice(window.selected[id].indexOf(itemIndex), 1);
+				} else {
+					window.selected[id].push(itemIndex);
+				}
+			}
+	}
 }
 
-function buildFields(table) {
+/**
+ * @function getMetadata
+ * Will fetch the data for a table based on its tableId
+ * @param tableId {string} - full velneo v7 table indentifier solution.vcd/TABLE
+ */
+function getMetadata(tableId) {
+	var data;	
+	data = _.find(window.metadata, function(item){ return item.id.replace(".", "") == tableId });
+	
+	if (data) {
+		return(data);
+	} else {
+		return( _.find(window.metadata, function(item) { return(item.id.split("/")[1] == tableId.split("/")[1]); }) );
+	}	
+}
+
+function buildFields(table, index, id) {
 	var fields = _.chain(table.fields)
 				 .where({hidden: false})
 				 .map(function(item) {
@@ -136,7 +181,7 @@ function buildFields(table) {
 				 .value()
 
 	fields.push({type: "control", width: (table.editable ? 100 : 50), editButton: table.editable, deleteButton: table.editable });
-	fields.unshift(customSelector());
+	fields.unshift(customSelector(index, id));
 	return(fields);
 }
 function getNeededFields(metadata, parts) {	
@@ -152,19 +197,24 @@ function getNeededFields(metadata, parts) {
 			.value()
 }
 
-function customSelector() {
+function customSelector(index, id) {
 	return({headerTemplate: function() {
 				return $("<input type='checkbox'>")
 						.on("click", function (event) {
 							$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked", !$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked"));
+							
+							if ( $(this).is(":checked") ) {
+								var data = $("#grid" + id).jsGrid("option", "data");
+								window.selected[id] = _.map(data, function(x, index) { return index; });
+							} else {
+								window.selected[id] = [];
+							}
 							event.stopPropagation();
 						});
 			},
-			itemTemplate: function(_, item) {	  
-				return $("<input type='checkbox' class='selectCheck'>")
-						.on("change", function (event) {
-							event.stopPropagation();
-						});
+			itemTemplate: function(val, item) {
+				var parts = _.values(_.pick.apply(null, construct(item, index.parts))).join(",");
+				return $("<input type='checkbox' class='selectCheck' id='" + parts + "'>");
 			},
 			align: "center",
 			width: 50,
@@ -182,9 +232,9 @@ function getjsGridType(type) {
 				4:   ["text", 200],
 				5:   ["text", 200],
 				6:   ["number", 110],
-				7:   ["customDate", 100],
-				8:   ["customTime", 70],
-				9:   ["customDateTime", 130],
+				7:   ["customDate", 120],
+				8:   ["customTime", 90],
+				9:   ["customDateTime", 150],
 				10:  ["checkbox", 60],
 				111: ["customTextArea",200],
 				112: ["customTextArea", 200]
@@ -216,6 +266,94 @@ function toggleEditing() {
 		$("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
 		$("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
 	}	
+}
+
+function nav_plural(table, id, index) {
+	return function() {
+		var _this = this;
+		swal({	title: 				"Escoger plural para " + table.name, 
+				text: 				_.template($("#pluralsList").html())({plurals: _.map(table.plurals, function(x) { return {table: x.boundedTable.replace(".", "").replace("@", "/"), index: x.boundedIndexId, name: x.name }; })}),
+				html: 				true,
+				showCancelButton: 	true,
+				confirmButtonColor: "#DD6B55",
+				confirmButtonText: 	"Cargar",
+				cancelButtonText: 	"Cancelar",
+				closeOnConfirm: 	true,
+				closeOnCancel: 		true
+				},
+				function(isConfirm){
+					var plural = $("#pluralSelect").val();
+					if( plural !== "") {
+						var table = plural.split("#")[0],
+							index = plural.split("#")[1],
+							ids   = getSelectedIds(id, null, $(_this).attr("href") == "#all");
+						
+						if ( $(_this).attr("href") !== "#all" && ids.length == 0 ) {
+							setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);							
+							return;
+						} else {
+							loadTable({
+								href: ("#" + table),
+								ids: ids,
+								indexId: index
+							});
+						}
+					}
+				
+		});
+		return false;
+	}  
+}
+
+function nav_master(table, id) {
+	return function() {
+			var _this = this;
+			swal({	title: 				"Escoger Maestros para " + table.name, 
+					text: 				_.template($("#mastersList").html())({masters: table.masters}),
+					html: 				true,
+					showCancelButton: 	true,
+					confirmButtonColor: "#DD6B55",
+					confirmButtonText: 	"Cargar",
+					cancelButtonText: 	"Cancelar",
+					closeOnConfirm: 	true,
+					closeOnCancel: 		true
+					},
+					function(isConfirm){
+						var master = $("#masterSelect").val();
+						if( master !== "") {
+							var table 	    = master.split("#")[0].replace(".", "").replace("@", "/"),
+								localField  = master.split("#")[1],
+								ids         = getSelectedIds(id, localField, $(_this).attr("href") == "#all");
+							
+							if ( $(_this).attr("href") !== "#all" && ids.length == 0 ) {
+								setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);							
+								return;
+							} else {
+								loadTable({
+									href: ("#" + table),
+									ids: ids,
+									indexId: "ID"
+								});								
+							}
+						}
+					
+			});
+			return false;
+	} 
+}
+
+function getSelectedIds(id, localField, all) {	
+	var data 	= $("#grid" + id).jsGrid("option", "data"),
+	    indexes = window.selected[id],
+		ids;
+	
+	if (all) {
+		return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
+	} else if (indexes.length > 0) {
+		return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
+	}
+	
+	return([]);
 }
 
 function addDateType() {
@@ -305,7 +443,6 @@ function addTimeType() {
         },
  
         editTemplate: function(value) {
-			console.log(value)
 			return this._editPicker = $("<input type='text' class='form-control' value='" + moment(value).format("LT") + "'/>").datetimepicker({format: "LT"});
         },
  
@@ -340,7 +477,6 @@ function addCustomTextArea() {
         },
  
         editTemplate: function(value) {
-			console.log(value)
 			return this._editPicker = $("<textarea rows='7' class='form-control'>" + value + "</textarea>");
         },
  

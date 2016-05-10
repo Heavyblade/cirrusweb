@@ -20,21 +20,62 @@
 <script type="text/template" id="contentTemplate">
 	<div id='content<%= id %>' role='tabpanel' class='tab-pane'>
 		<div class="modeWrapper">
-				<div class='mode'>
-						<div class="btn-group" data-toggle="buttons">
-						  <label class="btn btn-primary <%= mode == "navigation" ? "active" : "" %>">  
-							<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
-							<i class='glyphicon glyphicon-ok'/>
-						  </label>
-						  <label class="btn btn-success <%= mode == "editing" ? "active" : "" %>">
-							<input type="radio" name="options_<%= id %>" id="edit_<%= id %>" autocomplete="off" >Edición
-							<i class='glyphicon glyphicon-ok'/>
-						  </label>
-						</div>
+				<% if ( editable ) { %>
+					<div class='mode'>
+							<div class="btn-group" data-toggle="buttons">
+							<label class="btn btn-primary <%= mode == "navigation" ? "" : "active" %>">  
+								<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
+								<i class='glyphicon glyphicon-ok'/>
+							</label>
+							<label class="btn btn-success <%= mode == "editing" ? "" : "active" %>">
+								<input type="radio" name="options_<%= id %>" id="edit_<%= id %>" autocomplete="off" >Edición
+								<i class='glyphicon glyphicon-ok'/>
+							</label>
+							</div>
+					</div>
+				<% } %>
+				
+				<div class="btn-group action_button">
+						<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Acciones <span class="caret"></span>
+						</button>
+						<ul class="dropdown-menu">
+						<% if( isMaster ) { %>
+								<li><a class="nav_plural" href="#all">Plurales de todos</a></li>
+								<li><a class="nav_plural" href="#selected">Plurales Seleccionados</a></li>
+								<li role="separator" class="divider"></li> 
+						<% } %>
+						<li><a class="nav_master" href="#all">Maestros de todos</a></li>
+						<li><a class="nav_master" href="#selected">Maestros Seleccionados</a></li>
+						<% if ( editable ) { %>
+							<li role="separator" class="divider"></li>							
+							<li><a class="v7_action" href="#eliminar_<%= id %>">Eliminar</a></li>
+						<% } %>
+						</ul>
 				</div>
-
 				<div id='pager<%= id %>'/>
 		</div>
+
 		<div class='jsGrid' id='grid<%= id %>'/>
 	</div>
+</script>
+
+<script type="text/template" id="pluralsList">
+		<% z = plurals.length %>
+		<p>Selecciona el plural desplegar:</p>
+		<select class="form-control" id="pluralSelect">
+			<% for(i=0; i < z; i++) { %>
+				<option value="<%= plurals[i].table + "#" + plurals[i].index %>" ><%= plurals[i].name %></option>
+			<% } %>
+		</select>
+</script>
+
+<script type="text/template" id="mastersList">
+		<% z = masters.length %>
+		<p>Selecciona el maestro desplegar:</p>
+		<select class="form-control" id="masterSelect">
+			<% for(i=0; i < z; i++) { %>
+				<option value="<%= masters[i].table + "#" + masters[i].localId %>"><%= masters[i].name %></option>
+			<% } %>
+		</select>
 </script>

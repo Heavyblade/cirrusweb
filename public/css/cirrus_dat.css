@@ -33,13 +33,15 @@
 	font-size: 10px;
 }
 
-.mode {
+.mode, .action_button {
 	float: right;
+	margin-left: 10px;
 }
 
 .modeWrapper {
-	overflow: hidden;
-	margin-bottom: 20px;	
+	overflow: visible;
+	margin-bottom: 20px;
+	height: 40px;	
 }
 
 .modeWrapper .btn .glyphicon {
