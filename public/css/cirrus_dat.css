@@ -51,3 +51,9 @@
 .modeWrapper .btn.active .glyphicon {
 	display: inline;
 }
+
+.gridsize {
+	width: 50px;
+	float: left;
+	margin-right: 20px;
+}

@@ -45,19 +45,24 @@ function loadTable(data) {
 							  deleteConfirm: "Estas seguro de eliminar este registro?"
 							};
 
-		if ( data.indexType == 1 || data.indexType == 4 ) {
-			var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
-			if ( resolve ) {
-				params.indexResolve = resolve;
-			} else {
-				alert("No pueden obtenerse datos sin valores para la resolución del indice")
+		if ( _.isUndefined(data.indexResolve) ) {
+			if ( data.indexType == 1 || data.indexType == 4 ) {
+				var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
+				if ( resolve ) {
+					params.indexResolve = resolve;
+				} else {
+					alert("No pueden obtenerse datos sin valores para la resolución del indice");
+				}
 			}
+		} else {
+			params.indexResolve = data.indexResolve;	
 		}
 
 		baseOptions.fields 		   = buildFields(tableMetadata, index, id);
 		baseOptions.pagerContainer = "#pager" + id;
 		if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
 		if ( data.ids ) { params.ids = data.ids; }
+		if ( data.filterScript ) { params.filterScript = data.filterScript; }
 		baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index);
 		
 		if ( _.isUndefined( window.selected )) { window.selected = {};}
@@ -76,6 +81,8 @@ function loadTable(data) {
 		$("input[name=options_" + id + "]").on("change", toggleEditing);
 		$("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
 		$("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
+		$("#content" + id + " .filter").on("click", filter(tableMetadata));
+		$("#size_" + id).on("change", updateTableSize);
 }
 
 /**
@@ -132,6 +139,64 @@ function buildLoadData(idRef, params, index) {
 	});
 }
 
+/**
+ * updateTableSize
+ * Updates de current page size on the current grid as is changed in the input
+ */
+function updateTableSize() {
+	var id 	  = $(this).attr("id").split("_")[1],
+		value = parseInt($(this).val());
+
+	if ( value > 0 ) { $("#grid" + id).jsGrid("option", "pageSize", value); }
+}
+
+/**
+ * Filter will allow to load the table by an index and apply
+ * a filter wich will be a javascript function
+ * @param table {tableMetadata} - The data of the table
+ */
+function filter(table) {
+	return function() {
+			openModal({templateId: "#filter",
+					   templateContext: {indexes: table.indexes},
+					   title: "Filtrar - " + table.name,
+					   successButton: {title: "Filtrar", callback: function() {
+								loadTable({href:   	     ("#" + table.id.replace(".", "")),
+										   indexResolve: $("#indexResolve").val(),
+										   indexId: 	 $("#indexFilterSelect").val(),
+										   filterScript: $("#filterScript").val()
+								});
+					   }}
+				
+			});
+			return false;
+	}
+}
+
+function openModal(opts) {
+	    var html = _.template($(opts.templateId).html())(opts.templateContext);
+
+		if ( html != "" && html !== undefined && html !== null ) {
+			$('#myModal .modal-body').html(html);
+			if ( opts.title ) { $('#myModal h4.modal-title').html(opts.title); }
+			if ( opts.successButton ) {
+				$('#myModal .btn-primary').html(opts.successButton.title);
+				$('#myModal .btn-primary').unbind();
+				$('#myModal .btn-primary').on("click", opts.successButton.callback);
+				/*
+				  var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
+									styleActiveLine: true,
+									matchBrackets: true,
+									lineNumbers: true,
+									theme: "monokai",
+									mode: "javascript"
+								});
+				*/
+			 }	
+		}		
+		
+		$("#myModal").modal();
+}
 
 /**
  * @function rowClickHandler

@@ -7,6 +7,15 @@
 <div class="tab-content">
 
 </div>
+
+<!-- Custom CSS -->
+<link href="/public/css/codemirror/codemirror.css" rel="stylesheet">
+<link href="/public/css/codemirror/monokai.css" rel="stylesheet">
+
+<script src="/public/javascripts/codemirror/codemirror.js"></script>
+<script src="/public/javascripts/codemirror/mode/javascript.js"></script>
+<script src="/public/javascripts/codemirror/addon/active-line.js"></script>
+<script src="/public/javascripts/codemirror/addon/matchbrackets.js"></script>
  
 <script type="text/template" id="tabTemplate">
 	<li role='presentation'>
@@ -33,26 +42,29 @@
 							</label>
 							</div>
 					</div>
-				<% } %>
+				<% } %>			
+
 				
 				<div class="btn-group action_button">
 						<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Acciones <span class="caret"></span>
 						</button>
 						<ul class="dropdown-menu">
-						<% if( isMaster ) { %>
-								<li><a class="nav_plural" href="#all">Plurales de todos</a></li>
-								<li><a class="nav_plural" href="#selected">Plurales Seleccionados</a></li>
-								<li role="separator" class="divider"></li> 
-						<% } %>
-						<li><a class="nav_master" href="#all">Maestros de todos</a></li>
-						<li><a class="nav_master" href="#selected">Maestros Seleccionados</a></li>
-						<% if ( editable ) { %>
-							<li role="separator" class="divider"></li>							
-							<li><a class="v7_action" href="#eliminar_<%= id %>">Eliminar</a></li>
-						<% } %>
+							<% if( isMaster ) { %>
+									<li><a class="nav_plural" href="#all">Plurales de todos</a></li>
+									<li><a class="nav_plural" href="#selected">Plurales Seleccionados</a></li>
+									<li role="separator" class="divider"></li> 
+							<% } %>
+							<li><a class="nav_master" href="#all">Maestros de todos</a></li>
+							<li><a class="nav_master" href="#selected">Maestros Seleccionados</a></li>
+							<% if ( editable ) { %>
+								<li role="separator" class="divider"></li>							
+								<li><a class="v7_action" href="#eliminar_<%= id %>">Eliminar</a></li>
+							<% } %>
+							<li><a class="filter" href="#all">Filtrar</a></li>
 						</ul>
 				</div>
+				<input type="text" class="form-control  gridsize" id="size_<%= id %>" value="20">
 				<div id='pager<%= id %>'/>
 		</div>
 
@@ -78,4 +90,24 @@
 				<option value="<%= masters[i].table + "#" + masters[i].localId %>"><%= masters[i].name %></option>
 			<% } %>
 		</select>
+</script>
+
+<script type="text/template" id="filter">
+			<div class="form-group">
+				<label>Indice:</label>
+				<select class="form-control" id="indexFilterSelect">
+				<% z = indexes.length %>
+				<% for(var i=0; i < z; i++) { %>
+					<option value="<%= indexes[i].id %>"><%= indexes[i].name %></option>
+				<% } %>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Resolusión:</label>
+				<input type="text" class="form-control" id="indexResolve"/>
+			</div>
+			<div class="form-group">
+				<label>Filtro:</label>
+				<input type="text" id="filterScript" class="form-control" value=""/>
+			</div>
 </script>
