@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,11 +18,11 @@
 
     <!-- Custom CSS -->
     <link href="/public/css/sb-admin-2.css" rel="stylesheet">
-	<link href="/public/css/jsgrid.min.css" rel="stylesheet">
-	<link href="/public/css/jsgrid-theme.min.css" rel="stylesheet">
-	<link href="/public/css/datepicker/bootstrap-datetimepicker.min.css" rel="stylesheet">
-	<link href="/public/css/sweetalert.css" rel="stylesheet">	
-	<link href="/public/css/cirrus_dat.css" rel="stylesheet">
+    <link href="/public/css/jsgrid.min.css" rel="stylesheet">
+    <link href="/public/css/jsgrid-theme.min.css" rel="stylesheet">
+    <link href="/public/css/datepicker/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <link href="/public/css/sweetalert.css" rel="stylesheet">	
+    <link href="/public/css/cirrus_dat.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
@@ -57,7 +56,7 @@
             <div class="navbar-default sidebar" role="navigation" style="background-color: transparent; border-color: transparent; margin-top: 0px;">
                 <div class="sidebar-search">
 					<h1 style="margin-top: 0px;">CirrusDat</h1>
-                    <div class="input-group custom-search-form">					
+                    <div class="input-group custom-search-form">
                         <input id="searchTerm" type="text" class="form-control" placeholder="Filtrar">
                         <span class="input-group-btn">
                             <button id="searchTable" class="btn btn-default" type="button">
@@ -99,7 +98,7 @@
             <h3 class="modal-title">Modal title</h3>
           </div>
           <div class="modal-body">
-            
+
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
@@ -109,18 +108,17 @@
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <!-- Bootstrap Core JavaScript -->
+    <!-- Support javascript libraries -->
     <script src="/public/javascripts/bootstrap.min.js"></script>
-    <!-- Metis Menu Plugin JavaScript -->
     <script src="/public/javascripts/bootstrap-treeview.min.js"></script>
     <script src="/public/javascripts/undescore.min.js"></script>
-	<script src="/public/javascripts/jsgrid.min.js"></script>
-	<script src="/public/javascripts/datepicker/moment-with-locales.js"></script>
-	<script src="/public/javascripts/datepicker/bootstrap-datetimepicker.min.js"></script>
-	<script src="/public/javascripts/cirrus_dat.js"></script>
-	<script src="/public/javascripts/sweetalert.min.js"></script>
+    <script src="/public/javascripts/jsgrid.min.js"></script>
+    <script src="/public/javascripts/datepicker/moment-with-locales.js"></script>
+    <script src="/public/javascripts/datepicker/bootstrap-datetimepicker.min.js"></script>
+    <script src="/public/javascripts/cirrus_dat.js"></script>
+    <script src="/public/javascripts/sweetalert.min.js"></script>
     <script src="/public/javascripts/jsGridToExcel.js"></script>
-	
+
 
     <script type="text/javascript">
         $(document).ready(function(){
@@ -128,67 +126,70 @@
                     dataType: "json",
                     url: "/metadata.json",
                     success: function(result) {
-							window.metadata = result.metadata;
+                            window.metadata = result.metadata;
+
                             var grouped   = _.groupBy(result.metadata, function(item) { return(item.project); }),
                                 keys      = Object.keys(grouped),
                                 i         = keys.length,
                                 treeData  = [],
-								fields    = [];
+                                fields    = [];
 
                             for( z=0; z < i; z++ ) {
                                 var key = keys[z];
-								
-                                var tables = _.map(grouped[key], function(item){ 
-													fields =[{	text: "Campos", 
-                                                                color: "6D6D6D",
-																icon: "glyphicon glyphicon-folder-close", 
-																nodes: _.map(item.fields, function(field) { 
-																			return({text: 		field.name, 
-																					selectable: false, 
-																					fieldId: 	field.id, 
-																					state: 		{ checked: true}});
-																})
-															 },
-															 {	text: "Indices",
-                                                                color: "6D6D6D",
-																icon: "glyphicon glyphicon-folder-close",
-																nodes: _.map(item.indexes, function(index) {
-																			return({ href:  	 ("#" + item.id.replace(".", "")), 
-																					 text: 		 (" " + index.id),
-																					 indexType:  index.type,
-																					 selectable: true, 
-																					 indexId: 	 index.id,
-																					 parts:      index.parts,
-																					 icon: 		 "glyphicon glyphicon-bookmark"});
-																})
-															 }];
-													var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
-													return({href:      ("#" + item.id.replace(".", "")),
-															icon:      "glyphicon glyphicon-folder-close",
-															text:      " " + (item.name || item.singleName),
-															tableType: item.tableTtype,
-															indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
-															nodes:     fields});
-								});
-                                treeData.push({text:       key, 
-											   state: 	   {expanded: (z==0)},
-											   selectable: false,
-											   color:      "#583F7E",
-											   icon:       "glyphicon glyphicon-hdd",
-											   nodes:      tables});
+
+                                var tables = _.map(grouped[key], function(item){
+                                fields =[{	text: "Campos",
+                                            color: "6D6D6D",
+                                            icon: "glyphicon glyphicon-folder-close",
+                                            nodes: _.map(item.fields, function(field) {
+                                                  return({text: 		field.name,
+                                                      selectable: false,
+                                                      fieldId: 	field.id,
+                                                      state: 		{ checked: true}});
+                                            })
+                                            },
+                                            {	text: "Indices",
+                                                                            color: "6D6D6D",
+                                            icon: "glyphicon glyphicon-folder-close",
+                                            nodes: _.map(item.indexes, function(index) {
+                                                  return({ href:  	 ("#" + item.id.replace(".", "")),
+                                                       text: 		 (" " + index.id),
+                                                       indexType:  index.type,
+                                                       selectable: true,
+                                                       indexId: 	 index.id,
+                                                       parts:      index.parts,
+                                                       icon: 		 "glyphicon glyphicon-bookmark"});
+                                            })
+                                            }];
+                                            var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
+                                            return({href:      ("#" + item.id.replace(".", "")),
+                                            icon:      "glyphicon glyphicon-folder-close",
+                                            text:      " " + (item.name || item.singleName),
+                                            tableType: item.tableTtype,
+                                            indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
+                                            nodes:     fields});
+                                });
+
+                                treeData.push({text:       key,
+                                              state: 	   {expanded: (z==0)},
+                                              selectable: false,
+                                              color:      "#583F7E",
+                                              icon:       "glyphicon glyphicon-hdd",
+                                              nodes:      tables
+                                });
                             }
 
-                            $('#tree').treeview({color: 				"#428bca", 
-												 data: 					treeData,
-												 backColor: 			"transparent",
-												 showBorder: 			false,
-												 showCheckbox: 			true,
-												 searchResultBackColor: "#53c1a2",
-												 searchResultColor: 	"#FFF",
-												 onNodeChecked: 		addFieldToRender,
-												 onNodeUnchecked: 		addFieldToRender,
-												 onNodeSelected: 		function(event, data) {	loadTable(data); return false; }
-							});
+                            $('#tree').treeview({color: 				"#428bca",
+                                                 data: 					treeData,
+                                                 backColor: 			"transparent",
+                                                 showBorder: 			false,
+                                                 showCheckbox: 			true,
+                                                 searchResultBackColor: "#53c1a2",
+                                                 searchResultColor: 	"#FFF",
+                                                 onNodeChecked: 		addFieldToRender,
+                                                 onNodeUnchecked: 		addFieldToRender,
+                                                 onNodeSelected: 		function(event, data) {	loadTable(data); return false; }
+                            });
                     }
             });
             $("#searchTable").on("click", function(){
