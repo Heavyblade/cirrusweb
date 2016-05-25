@@ -2,15 +2,22 @@ function existy(x) {
   return x != null;
 }
 
-function cat() {
+// toma un listado de arrays en los parametros los concatena y
+// devuelve un solo array sumandolos todos
+// [1], [2,3], [4,5,6]
+// a
+// [1, 2, 3, 4, 5, 6]
+function cat(/* arguments */) {
   var head = _.first(arguments);
-
-  if (existy(head))
-    return head.concat.apply(head, _.rest(arguments));
-  else
-    return [];
+  return(existy(head) ? head.concat.apply(head, _.rest(arguments)) : [] );
 }
 
+/**
+ * concatena un elemento al frente de un array
+ * @param  {string|int|float} head  - Elemento a añadir al array.
+ * @param  {array} tail - Array para añadir el elemento.
+ * @return void
+ */
 function construct(head, tail) {
   return cat([head], _.toArray(tail));
 }
@@ -22,28 +29,26 @@ function construct(head, tail) {
 * @param data {object} - Objeto correpondiente al nodo seleccionado.
 */
 function loadTable(data) {
-		console.log(data);
 		if ( _.isUndefined(data.href) || _.isUndefined(data.indexId) ) { return; }
 
-		var params 		  = { index: data.indexId },
-			tableMetadata = getMetadata(data.href.replace("#", '')),
-		  id 			      = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
-			index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
-			neededFields  = getNeededFields(tableMetadata, index.parts),
-			baseOptions   = { width: 	     	'auto',
-							  height:      		'auto',
-							  autoload:    		true,
-							  inserting:   		true,
-							  editing:     		false,
-							  sorting:   	 	true,
-							  paging:    	 	true,
-							  pageLoading: 		true,
-							  loadIndication: 	true,
-							  rowClick:         rowClickHandler(id),
-							  loadIndicationDelay: 300,
-							  multiselect:      true,
-							  deleteConfirm: "Estas seguro de eliminar este registro?"
-							};
+		var params 		    = { index: data.indexId },
+			  tableMetadata = getMetadata(data.href.replace("#", '')),
+		    id 			      = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
+			  index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
+			  neededFields  = getNeededFields(tableMetadata, index.parts),
+			  baseOptions   = { width: 	     	     'auto',
+        							  height:      		     'auto',
+        							  autoload:    		     true,
+        							  inserting:   		     true,
+        							  editing:     		     false,
+        							  sorting:   	 	       true,
+        							  paging:    	 	       true,
+        							  pageLoading: 		     true,
+        							  loadIndication: 	   true,
+        							  rowClick:            rowClickHandler(id),
+        							  loadIndicationDelay: 300,
+        							  multiselect:         true,
+        							  deleteConfirm:       "Estas seguro de eliminar este registro?" };
 
 		if ( _.isUndefined(data.indexResolve) ) {
 			if ( data.indexType == 1 || data.indexType == 4 ) {
@@ -153,10 +158,9 @@ function exportToExcel(id, metadata) {
 	});
 }
 
-
 /**
- * updateTableSize
  * Updates de current page size on the current grid as is changed in the input
+ * @return {void}
  */
 function updateTableSize() {
 	var id 	  = $(this).attr("id").split("_")[1],
@@ -167,8 +171,7 @@ function updateTableSize() {
 
 /**
  * Filter will allow to load the table by an index and apply
- * a filter wich will be a javascript function
- * @param table {tableMetadata} - The data of the table
+ * @param  {table} table [description]
  */
 function filter(table) {
 	return function() {
@@ -188,12 +191,11 @@ function filter(table) {
 	};
 }
 
-
 /**
  * openModal
  * Will open a modal window with an html and and button actions
- * @param opts.templateId {string} - The selector for the template that holds the html
- * @param opts.title {string}      - The title for the modal box
+ * @param opts.templateId    {string} - The selector for the template that holds the html
+ * @param opts.title         {string} - The title for the modal box
  * @param opts.successButton {object} -The name and callback that will be associated with the succes button
  */
 function openModal(opts) {
@@ -222,7 +224,6 @@ function openModal(opts) {
 }
 
 /**
- * @function rowClickHandler
  * Create a closure to create global variable that will hold
  * the selected items on the grid
  * @param id {string} The id create for the current grid
@@ -244,7 +245,6 @@ function rowClickHandler(id) {
 }
 
 /**
- * @function getMetadata
  * Will fetch the data for a table based on its tableId
  * @param tableId {string} - full velneo v7 table indentifier solution.vcd/TABLE
  */
@@ -258,6 +258,13 @@ function getMetadata(tableId) {
 	}
 }
 
+/**
+ * Construye el input que tomara la tabla a construir
+ * @param  {object} table [ Metadata de la tabla para los campos ]
+ * @param  {object} index [ Objeto index para construir la columna de selccion ]
+ * @param  {string} id    [ Id unico de la tabla ]
+ * @return {object}       [ Mapeo de campos para la tabla ]
+ */
 function buildFields(table, index, id) {
 	var fields = _.chain(table.fields)
 				 .where({hidden: false})
@@ -271,6 +278,13 @@ function buildFields(table, index, id) {
 	fields.unshift(customSelector(index, id));
 	return(fields);
 }
+
+/**
+ * Obtiene los campos seleccionados para solicitar a backend.
+ * @param  {object} metadata [ Metadata de la tabla para los campos ]
+ * @param  {array} parts     [ array con las partes del indice,
+ * para garantizar que siempre esten los campos que componen el indice sobre el que se esta trabajando ]
+ */
 function getNeededFields(metadata, parts) {
 	return _.chain(metadata.fields)
 			.map(function(item) {
@@ -281,6 +295,12 @@ function getNeededFields(metadata, parts) {
 			.value();
 }
 
+/**
+ * Crea input que se usa de base para cada fila
+ * @param  {object} index [ Index parts ]
+ * @param  {string} id    [ Id único de la tabla ]
+ * @return {object}       [ Entrega el objeto que representa el campo ]
+ */
 function customSelector(index, id) {
 	return({headerTemplate: function() {
 				return $("<input type='checkbox'>")
@@ -308,6 +328,12 @@ function customSelector(index, id) {
     });
 }
 
+/**
+ * Mapea los tipos de dato de V7 a el
+ * tipo de dato de jsGrid
+ * @param  {int} type [ tipo de dato v7 ]
+ * @return {array}    [ [tipo de dato jsGrid, length] ]
+ */
 function getjsGridType(type) {
   var intType = parseInt(type),
 	  types   = {
@@ -329,16 +355,23 @@ function getjsGridType(type) {
   return(types[intType] || "");
 }
 
+/**
+ * Se encarga de hacer el binding para cerrar el tab garantizando que
+ * alguna quede seleccionada
+ */
 function bindCloseTab() {
-	var contentSelector = $(this).parent().attr("href");
-	$(contentSelector).remove();
-	$(this).parent().remove();
-	if ( $(".nav-tabs li a").length > 0 ) {
-		$($(".nav-tabs li a")[$(".nav-tabs li a").length-1]).tab("show");
-	}
-	return(false);
+  	var contentSelector = $(this).parent().attr("href");
+  	$(contentSelector).remove();
+  	$(this).parent().remove();
+  	if ( $(".nav-tabs li a").length > 0 ) {
+  		$($(".nav-tabs li a")[$(".nav-tabs li a").length-1]).tab("show");
+  	}
+  	return(false);
 }
 
+/**
+ * Habilita / Deshabilita la edición en la rejilla.
+ */
 function toggleEditing() {
 	var id 		= $(this).attr("id").split("_")[1],
 		element = $(this).attr("id").split("_")[0];
@@ -354,6 +387,14 @@ function toggleEditing() {
 	}
 }
 
+/**
+ * Crea el closure para ejecutar cuando se desee navegar por los plurales de
+ * para navegar por ellos
+ * @param  {object} table [ Metadata de la tabla para los campos ]
+ * @param  {object} index [ Objeto index para construir la columna de selccion ]
+ * @param  {string} id    [ Id único de la tabla ]
+ * @return {function}     [ La funcion a ejecutar cuando se desee navegar por los plurales ]
+ */
 function nav_plural(table, id, index) {
 	return function() {
 		var _this = this;
@@ -391,6 +432,12 @@ function nav_plural(table, id, index) {
 	};
 }
 
+/**
+ * Crea el closure para ejecutar cuando se desee navegar por los maestros de la tabla
+ * @param  {object} table [ Metadata de la tabla para los campos ]
+ * @param  {string} id    [ Id único de la tabla ]
+ * @return {function}     [ La funcion a ejecutar cuando se desee navegar por los maestros ]
+ */
 function nav_master(table, id) {
 	return function() {
 			var _this = this;
@@ -428,6 +475,13 @@ function nav_master(table, id) {
 	};
 }
 
+/**
+ * Obtiene los ids de las filas seleccionadas
+ * @param  {string}  id         [ Id único de la tabla ]
+ * @param  {string } localField [ Nombre del campo para recoger los ids ]
+ * @param  {bool}    all        [ Indicativo de si se desea tomar todos los campos]
+ * @return {array}              [ Array de ids ]
+ */
 function getSelectedIds(id, localField, all) {
 	var data 	= $("#grid" + id).jsGrid("option", "data"),
 	    indexes = window.selected[id],
@@ -590,9 +644,9 @@ function addFieldToRender(event, node) {
 }
 
 $(document).ready(function(){
-	 addDateType();
-	 addDateTimeType();
-	 addTimeType();
-	 addCustomTextArea();
-	$(".tab-close").on("click", bindCloseTab);
+  	 addDateType();
+  	 addDateTimeType();
+  	 addTimeType();
+  	 addCustomTextArea();
+  	$(".tab-close").on("click", bindCloseTab);
 });
