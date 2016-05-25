@@ -29,43 +29,43 @@
 <script type="text/template" id="contentTemplate">
 	<div id='content<%= id %>' role='tabpanel' class='tab-pane'>
 		<div class="modeWrapper">
-				<% if ( editable ) { %>
-					<div class='mode'>
-							<div class="btn-group" data-toggle="buttons">
-							<label class="btn btn-primary <%= mode == "navigation" ? "" : "active" %>">  
-								<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
-								<i class='glyphicon glyphicon-ok'/>
-							</label>
-							<label class="btn btn-success <%= mode == "editing" ? "" : "active" %>">
-								<input type="radio" name="options_<%= id %>" id="edit_<%= id %>" autocomplete="off" >Edición
-								<i class='glyphicon glyphicon-ok'/>
-							</label>
-							</div>
-					</div>
-				<% } %>			
-
-				
-				<div class="btn-group action_button">
-						<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						Acciones <span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu">
-							<% if( isMaster ) { %>
-									<li><a class="nav_plural" href="#all">Plurales de todos</a></li>
-									<li><a class="nav_plural" href="#selected">Plurales Seleccionados</a></li>
-									<li role="separator" class="divider"></li> 
-							<% } %>
-							<li><a class="nav_master" href="#all">Maestros de todos</a></li>
-							<li><a class="nav_master" href="#selected">Maestros Seleccionados</a></li>
-							<% if ( editable ) { %>
-								<li role="separator" class="divider"></li>							
-								<li><a class="v7_action" href="#eliminar_<%= id %>">Eliminar</a></li>
-							<% } %>
-							<li><a class="filter" href="#all">Filtrar</a></li>
-						</ul>
+			<% if ( editable ) { %>
+				<div class='mode'>
+						<div class="btn-group" data-toggle="buttons">
+						<label class="btn btn-primary <%= mode == "navigation" ? "" : "active" %>">  
+							<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
+							<i class='glyphicon glyphicon-ok'/>
+						</label>
+						<label class="btn btn-success <%= mode == "editing" ? "" : "active" %>">
+							<input type="radio" name="options_<%= id %>" id="edit_<%= id %>" autocomplete="off" >Edición
+							<i class='glyphicon glyphicon-ok'/>
+						</label>
+						</div>
 				</div>
-				<input type="text" class="form-control  gridsize" id="size_<%= id %>" value="20">
-				<div id='pager<%= id %>'/>
+			<% } %>
+			
+			<div class="btn-group action_button">
+					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Acciones <span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<% if( isMaster ) { %>
+								<li><a class="nav_plural" href="#all"><span class="glyphicon glyphicon-folder-open"></span>Plurales de todos</a></li>
+								<li><a class="nav_plural" href="#selected"><span class="glyphicon glyphicon-folder-open"></span>Plurales Seleccionados</a></li>
+								<li role="separator" class="divider"></li> 
+						<% } %>
+						<li><a class="nav_master" href="#all"><span class="glyphicon glyphicon-level-up"></span>Maestros de todos</a></li>
+						<li><a class="nav_master" href="#selected"><span class="glyphicon glyphicon-level-up"></span>Maestros Seleccionados</a></li>
+						<li><a class="v7_export" href="#exportar_<%= id %>"><span class="glyphicon glyphicon-floppy-disk"></span>Exportar Excel</a></li>
+						<li><a class="filter" href="#all"><span class="glyphicon glyphicon-filter"></span>Filtrar</a></li>
+						<% if ( editable ) { %>
+							<li role="separator" class="divider"></li>							
+							<li><a class="v7_action" href="#eliminar_<%= id %>"><span class="glyphicon glyphicon-trash"></span>Eliminar</a></li>		
+						<% } %>
+					</ul>
+			</div>
+			<input type="text" class="form-control  gridsize" id="size_<%= id %>" value="20">
+			<div id='pager<%= id %>'/>
 		</div>
 
 		<div class='jsGrid' id='grid<%= id %>'/>
@@ -93,21 +93,21 @@
 </script>
 
 <script type="text/template" id="filter">
-			<div class="form-group">
-				<label>Indice:</label>
-				<select class="form-control" id="indexFilterSelect">
-				<% z = indexes.length %>
-				<% for(var i=0; i < z; i++) { %>
-					<option value="<%= indexes[i].id %>"><%= indexes[i].name %></option>
-				<% } %>
-				</select>
-			</div>
-			<div class="form-group">
-				<label>Resolusión:</label>
-				<input type="text" class="form-control" id="indexResolve"/>
-			</div>
-			<div class="form-group">
-				<label>Filtro:</label>
-				<input type="text" id="filterScript" class="form-control" value=""/>
-			</div>
+		<div class="form-group">
+			<label>Indice:</label>
+			<select class="form-control" id="indexFilterSelect">
+			<% z = indexes.length %>
+			<% for(var i=0; i < z; i++) { %>
+				<option value="<%= indexes[i].id %>"><%= indexes[i].name %></option>
+			<% } %>
+			</select>
+		</div>
+		<div class="form-group">
+			<label>Resolusión:</label>
+			<input type="text" class="form-control" id="indexResolve"/>
+		</div>
+		<div class="form-group">
+			<label>Filtro:</label>
+			<input type="text" id="filterScript" class="form-control" value=""/>
+		</div>
 </script>

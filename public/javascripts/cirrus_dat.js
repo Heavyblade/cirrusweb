@@ -82,6 +82,7 @@ function loadTable(data) {
 		$("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
 		$("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
 		$("#content" + id + " .filter").on("click", filter(tableMetadata));
+		$("#content" + id + " .v7_export").on("click", exportToExcel(id, tableMetadata));
 		$("#size_" + id).on("change", updateTableSize);
 }
 
@@ -140,6 +141,20 @@ function buildLoadData(idRef, params, index) {
 }
 
 /**
+ * exportToExcel
+ * This function will export the content of the current data to a excel file.
+ * @param id {string} - the id for the current view
+ */
+function exportToExcel(id, metadata) {
+	return(function() {
+		var filename = prompt("Nombre para el archivo", "Excel");
+		genExcel(("#grid"+id), filename);
+		return false;
+	});
+}
+
+
+/**
  * updateTableSize
  * Updates de current page size on the current grid as is changed in the input
  */
@@ -173,6 +188,14 @@ function filter(table) {
 	}
 }
 
+
+/**
+ * openModal
+ * Will open a modal window with an html and and button actions
+ * @param opts.templateId {string} - The selector for the template that holds the html
+ * @param opts.title {string}      - The title for the modal box
+ * @param opts.successButton {object} -The name and callback that will be associated with the succes button
+ */
 function openModal(opts) {
 	    var html = _.template($(opts.templateId).html())(opts.templateContext);
 
@@ -280,10 +303,12 @@ function customSelector(index, id) {
 			itemTemplate: function(val, item) {
 				var parts = _.values(_.pick.apply(null, construct(item, index.parts))).join(",");
 				return $("<input type='checkbox' class='selectCheck' id='" + parts + "'>");
-			},
+			},			 
+
 			align: "center",
 			width: 50,
-			height: 50
+			height: 50,
+			css: "noExl"
     });
 }
 
@@ -324,12 +349,12 @@ function toggleEditing() {
 	
 	if ( element == "edit" ) {
 		$("#grid" + id).jsGrid("option", "editing", true);
-		$("#grid" + id + " .jsgrid-grid-header tr th:first-child").hide();
-		$("#grid" + id + " .jsgrid-grid-body tr td:first-child").hide();
+		// $("#grid" + id + " .jsgrid-grid-header tr th:first-child").hide();
+		// $("#grid" + id + " .jsgrid-grid-body tr td:first-child").hide();
 	} else {
 		$("#grid" + id).jsGrid("option", "editing", false);
-		$("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
-		$("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
+		// $("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
+		// $("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
 	}	
 }
 
