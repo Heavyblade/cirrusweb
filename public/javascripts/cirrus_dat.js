@@ -1,5 +1,5 @@
 function existy(x) {
-  return x != null;
+ return x !== null && x !== undefined;
 }
 
 // toma un listado de arrays en los parametros los concatena y
@@ -63,7 +63,7 @@ function loadTable(data) {
       params.indexResolve = data.indexResolve;
     }
 
-    baseOptions.fields 		   = buildFields(tableMetadata, index, id);
+    baseOptions.fields         = buildFields(tableMetadata, index, id);
     baseOptions.pagerContainer = "#pager" + id;
     if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
     if ( data.ids ) { params.ids = data.ids; }
@@ -121,7 +121,7 @@ function buildLoadData(idRef, params, index) {
     },
 
     updateItem: function(item) {
-      var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
+      var parts     = _.values(_.pick.apply(null, construct(item, index.parts))),
         paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
 
       return $.ajax({
@@ -133,7 +133,7 @@ function buildLoadData(idRef, params, index) {
     },
 
     deleteItem: function(item) {
-      var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
+      var parts     = _.values(_.pick.apply(null, construct(item, index.parts))),
         paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
       return $.ajax({
         type: "DELETE",
@@ -163,8 +163,8 @@ function exportToExcel(id, metadata) {
  * @return {void}
  */
 function updateTableSize() {
-  var id 	  = $(this).attr("id").split("_")[1],
-  value = parseInt($(this).val());
+  var id    = $(this).attr("id").split("_")[1],
+      value = parseInt($(this).val());
 
   if ( value > 0 ) { $("#grid" + id).jsGrid("option", "pageSize", value); }
 }
@@ -179,13 +179,12 @@ function filter(table) {
              templateContext: {indexes: table.indexes},
              title: "Filtrar - " + table.name,
              successButton: {title: "Filtrar", callback: function() {
-                loadTable({href:   	     ("#" + table.id.replace(".", "")),
-                       indexResolve: $("#indexResolve").val(),
-                       indexId: 	 $("#indexFilterSelect").val(),
-                       filterScript: $("#filterScript").val()
+                loadTable({href:      ("#" + table.id.replace(".", "")),
+                       indexResolve:  $("#indexResolve").val(),
+                       indexId:       $("#indexFilterSelect").val(),
+                       filterScript:  $("#filterScript").val()
                 });
              }}
-
       });
       return false;
   };
@@ -230,8 +229,8 @@ function openModal(opts) {
  */
 function rowClickHandler(id) {
   return function(e) {
-      var ev 		  = e.event,
-        item  	  = e.item,
+      var ev      = e.event,
+        item      = e.item,
         itemIndex = e.itemIndex;
 
       if ( $(ev.target).attr("class") == "selectCheck" ) {
@@ -373,7 +372,7 @@ function bindCloseTab() {
  * Habilita / Deshabilita la edición en la rejilla.
  */
 function toggleEditing() {
-    var id 		= $(this).attr("id").split("_")[1],
+    var id    = $(this).attr("id").split("_")[1],
       element = $(this).attr("id").split("_")[0];
 
     if ( element == "edit" ) {
@@ -398,15 +397,15 @@ function toggleEditing() {
 function nav_plural(table, id, index) {
     return function() {
       var _this = this;
-      swal({	title: 				"Escoger plural para " + table.name,
-          text: 				_.template($("#pluralsList").html())({plurals: _.map(table.plurals, function(x) { return {table: x.boundedTable.replace(".", "").replace("@", "/"), index: x.boundedIndexId, name: x.name }; })}),
-          html: 				true,
-          showCancelButton: 	true,
+      swal({ title:          "Escoger plural para " + table.name,
+          text:               _.template($("#pluralsList").html())({plurals: _.map(table.plurals, function(x) { return {table: x.boundedTable.replace(".", "").replace("@", "/"), index: x.boundedIndexId, name: x.name }; })}),
+          html:               true,
+          showCancelButton:   true,
           confirmButtonColor: "#DD6B55",
-          confirmButtonText: 	"Cargar",
-          cancelButtonText: 	"Cancelar",
-          closeOnConfirm: 	true,
-          closeOnCancel: 		true
+          confirmButtonText:  "Cargar",
+          cancelButtonText:   "Cancelar",
+          closeOnConfirm:     true,
+          closeOnCancel:      true
           },
           function(isConfirm){
             var plural = $("#pluralSelect").val();
@@ -441,20 +440,20 @@ function nav_plural(table, id, index) {
 function nav_master(table, id) {
     return function() {
         var _this = this;
-        swal({	title: 				"Escoger Maestros para " + table.name,
-            text: 				_.template($("#mastersList").html())({masters: table.masters}),
-            html: 				true,
-            showCancelButton: 	true,
+        swal({ title:           "Escoger Maestros para " + table.name,
+            text:               _.template($("#mastersList").html())({masters: table.masters}),
+            html:               true,
+            showCancelButton:   true,
             confirmButtonColor: "#DD6B55",
-            confirmButtonText: 	"Cargar",
-            cancelButtonText: 	"Cancelar",
-            closeOnConfirm: 	true,
-            closeOnCancel: 		true
+            confirmButtonText:  "Cargar",
+            cancelButtonText:   "Cancelar",
+            closeOnConfirm:     true,
+            closeOnCancel:      true
             },
             function(isConfirm){
               var master = $("#masterSelect").val();
               if( master !== "") {
-                var table 	    = master.split("#")[0].replace(".", "").replace("@", "/"),
+                var table     = master.split("#")[0].replace(".", "").replace("@", "/"),
                   localField  = master.split("#")[1],
                   ids         = getSelectedIds(id, localField, $(_this).attr("href") == "#all");
 
@@ -497,7 +496,7 @@ function getSelectedIds(id, localField, all) {
 }
 
 function addDateType() {
-	var MyDateField = function(config) {
+  var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
 
@@ -531,7 +530,7 @@ function addDateType() {
 }
 
 function addDateTimeType() {
-	var MyDateField = function(config) {
+  var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
 
@@ -565,7 +564,7 @@ function addDateTimeType() {
 }
 
 function addTimeType() {
-	var MyDateField = function(config) {
+  var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
 
