@@ -27,8 +27,8 @@ function loadTable(data) {
 
 		var params 		  = { index: data.indexId },
 			tableMetadata = getMetadata(data.href.replace("#", '')),
-		    id 			  = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
-			index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId }),
+		  id 			      = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
+			index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
 			neededFields  = getNeededFields(tableMetadata, index.parts),
 			baseOptions   = { width: 	     	'auto',
 							  height:      		'auto',
@@ -55,7 +55,7 @@ function loadTable(data) {
 				}
 			}
 		} else {
-			params.indexResolve = data.indexResolve;	
+			params.indexResolve = data.indexResolve;
 		}
 
 		baseOptions.fields 		   = buildFields(tableMetadata, index, id);
@@ -64,16 +64,16 @@ function loadTable(data) {
 		if ( data.ids ) { params.ids = data.ids; }
 		if ( data.filterScript ) { params.filterScript = data.filterScript; }
 		baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index);
-		
+
 		if ( _.isUndefined( window.selected )) { window.selected = {};}
 		window.selected[id] = [];
-		
+
 		$(_.template($("#tabTemplate").html())({id: id, name: tableMetadata.name})).appendTo(".nav-tabs");
 		$(_.template($("#contentTemplate").html())({id: id,
-													mode: tableMetadata.editable ? "editing" : "navigation", 
-													isMaster: tableMetadata.tableType == 0 || tableMetadata.tableType == 3,
+													mode: tableMetadata.editable ? "editing" : "navigation",
+													isMaster: tableMetadata.tableType === 0 || tableMetadata.tableType === 3,
 													editable: tableMetadata.editable})).appendTo(".tab-content");
-	
+
 		$("#grid" + id).jsGrid(baseOptions);
 		$(".tab-close").on("click", bindCloseTab);
 		$('#' + id).tab('show');
@@ -105,7 +105,7 @@ function buildLoadData(idRef, params, index) {
 				dataType: "json"
 			});
 		},
-		
+
 		insertItem: function(item) {
 			return $.ajax({
 				type: "POST",
@@ -114,11 +114,11 @@ function buildLoadData(idRef, params, index) {
 				dataType: "json"
 			});
 		},
-		
+
 		updateItem: function(item) {
 			var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
-				paramParts  = _.map(parts, function(item){ return "parts=" + item }).join("&");				
-			
+				paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
+
 			return $.ajax({
 				type: "PUT",
 				url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
@@ -126,10 +126,10 @@ function buildLoadData(idRef, params, index) {
 				dataType: "json"
 			});
 		},
-		
+
 		deleteItem: function(item) {
 			var parts 		= _.values(_.pick.apply(null, construct(item, index.parts))),
-				paramParts  = _.map(parts, function(item){ return "parts=" + item }).join("&");
+				paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
 			return $.ajax({
 				type: "DELETE",
 				url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
@@ -182,10 +182,10 @@ function filter(table) {
 										   filterScript: $("#filterScript").val()
 								});
 					   }}
-				
+
 			});
 			return false;
-	}
+	};
 }
 
 
@@ -199,7 +199,7 @@ function filter(table) {
 function openModal(opts) {
 	    var html = _.template($(opts.templateId).html())(opts.templateContext);
 
-		if ( html != "" && html !== undefined && html !== null ) {
+		if ( html !== "" && html !== undefined && html !== null ) {
 			$('#myModal .modal-body').html(html);
 			if ( opts.title ) { $('#myModal h4.modal-title').html(opts.title); }
 			if ( opts.successButton ) {
@@ -215,9 +215,9 @@ function openModal(opts) {
 									mode: "javascript"
 								});
 				*/
-			 }	
-		}		
-		
+			 }
+		}
+
 		$("#myModal").modal();
 }
 
@@ -232,7 +232,7 @@ function rowClickHandler(id) {
 			var ev 		  = e.event,
 				item  	  = e.item,
 				itemIndex = e.itemIndex;
-			
+
 			if ( $(ev.target).attr("class") == "selectCheck" ) {
 				if ( window.selected[id].indexOf(itemIndex) !== -1 ) {
 					window.selected[id].splice(window.selected[id].indexOf(itemIndex), 1);
@@ -240,7 +240,7 @@ function rowClickHandler(id) {
 					window.selected[id].push(itemIndex);
 				}
 			}
-	}
+	};
 }
 
 /**
@@ -249,14 +249,13 @@ function rowClickHandler(id) {
  * @param tableId {string} - full velneo v7 table indentifier solution.vcd/TABLE
  */
 function getMetadata(tableId) {
-	var data;	
-	data = _.find(window.metadata, function(item){ return item.id.replace(".", "") == tableId });
-	
+	var data = _.find(window.metadata, function(item){ return(item.id.replace(".", "") == tableId); });
+
 	if (data) {
 		return(data);
 	} else {
 		return( _.find(window.metadata, function(item) { return(item.id.split("/")[1] == tableId.split("/")[1]); }) );
-	}	
+	}
 }
 
 function buildFields(table, index, id) {
@@ -266,23 +265,20 @@ function buildFields(table, index, id) {
 					var gridType = getjsGridType(item.type);
 					return {name: item.id, title: item.name, width: (item.id == "ID" ? 60: gridType[1]), type: gridType[0] };
 				 })
-				 .value()
+				 .value();
 
 	fields.push({type: "control", width: (table.editable ? 100 : 50), editButton: table.editable, deleteButton: table.editable });
 	fields.unshift(customSelector(index, id));
 	return(fields);
 }
-function getNeededFields(metadata, parts) {	
+function getNeededFields(metadata, parts) {
 	return _.chain(metadata.fields)
 			.map(function(item) {
 						var esta = parts.indexOf(item.id) > -1;
-
-						if ( item.hidden == false || esta ) {
-							return item.id; 
-						} 
+						if ( item.hidden === false || esta ) { return item.id; }
 			})
 			.compact()
-			.value()
+			.value();
 }
 
 function customSelector(index, id) {
@@ -290,7 +286,7 @@ function customSelector(index, id) {
 				return $("<input type='checkbox'>")
 						.on("click", function (event) {
 							$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked", !$(this).closest(".jsGrid").find(".jsgrid-grid-body .selectCheck").prop("checked"));
-							
+
 							if ( $(this).is(":checked") ) {
 								var data = $("#grid" + id).jsGrid("option", "data");
 								window.selected[id] = _.map(data, function(x, index) { return index; });
@@ -303,7 +299,7 @@ function customSelector(index, id) {
 			itemTemplate: function(val, item) {
 				var parts = _.values(_.pick.apply(null, construct(item, index.parts))).join(",");
 				return $("<input type='checkbox' class='selectCheck' id='" + parts + "'>");
-			},			 
+			},
 
 			align: "center",
 			width: 50,
@@ -329,7 +325,7 @@ function getjsGridType(type) {
 				111: ["customTextArea",200],
 				112: ["customTextArea", 200]
 				};
-  
+
   return(types[intType] || "");
 }
 
@@ -346,7 +342,7 @@ function bindCloseTab() {
 function toggleEditing() {
 	var id 		= $(this).attr("id").split("_")[1],
 		element = $(this).attr("id").split("_")[0];
-	
+
 	if ( element == "edit" ) {
 		$("#grid" + id).jsGrid("option", "editing", true);
 		// $("#grid" + id + " .jsgrid-grid-header tr th:first-child").hide();
@@ -355,13 +351,13 @@ function toggleEditing() {
 		$("#grid" + id).jsGrid("option", "editing", false);
 		// $("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
 		// $("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
-	}	
+	}
 }
 
 function nav_plural(table, id, index) {
 	return function() {
 		var _this = this;
-		swal({	title: 				"Escoger plural para " + table.name, 
+		swal({	title: 				"Escoger plural para " + table.name,
 				text: 				_.template($("#pluralsList").html())({plurals: _.map(table.plurals, function(x) { return {table: x.boundedTable.replace(".", "").replace("@", "/"), index: x.boundedIndexId, name: x.name }; })}),
 				html: 				true,
 				showCancelButton: 	true,
@@ -377,9 +373,9 @@ function nav_plural(table, id, index) {
 						var table = plural.split("#")[0],
 							index = plural.split("#")[1],
 							ids   = getSelectedIds(id, null, $(_this).attr("href") == "#all");
-						
-						if ( $(_this).attr("href") !== "#all" && ids.length == 0 ) {
-							setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);							
+
+						if ( $(_this).attr("href") !== "#all" && ids.length === 0 ) {
+							setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);
 							return;
 						} else {
 							loadTable({
@@ -389,16 +385,16 @@ function nav_plural(table, id, index) {
 							});
 						}
 					}
-				
+
 		});
 		return false;
-	}  
+	};
 }
 
 function nav_master(table, id) {
 	return function() {
 			var _this = this;
-			swal({	title: 				"Escoger Maestros para " + table.name, 
+			swal({	title: 				"Escoger Maestros para " + table.name,
 					text: 				_.template($("#mastersList").html())({masters: table.masters}),
 					html: 				true,
 					showCancelButton: 	true,
@@ -414,35 +410,35 @@ function nav_master(table, id) {
 							var table 	    = master.split("#")[0].replace(".", "").replace("@", "/"),
 								localField  = master.split("#")[1],
 								ids         = getSelectedIds(id, localField, $(_this).attr("href") == "#all");
-							
-							if ( $(_this).attr("href") !== "#all" && ids.length == 0 ) {
-								setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);							
+
+							if ( $(_this).attr("href") !== "#all" && ids.length === 0 ) {
+								setTimeout(function() {swal("No hay elementos seleccionados");}, 1000);
 								return;
 							} else {
 								loadTable({
 									href: ("#" + table),
 									ids: ids,
 									indexId: "ID"
-								});								
+								});
 							}
 						}
-					
+
 			});
 			return false;
-	} 
+	};
 }
 
-function getSelectedIds(id, localField, all) {	
+function getSelectedIds(id, localField, all) {
 	var data 	= $("#grid" + id).jsGrid("option", "data"),
 	    indexes = window.selected[id],
 		ids;
-	
+
 	if (all) {
 		return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
 	} else if (indexes.length > 0) {
 		return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
 	}
-	
+
 	return([]);
 }
 
@@ -450,33 +446,33 @@ function addDateType() {
 	var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
- 
+
     MyDateField.prototype = new jsGrid.Field({
         sorter: function(date1, date2) {
             return new Date(date1) - new Date(date2);
         },
- 
+
         itemTemplate: function(value) {
             return moment(value).format("YYYY-MM-DD");
         },
- 
+
         insertTemplate: function(value) {
             return this._insertPicker = $("<input type='text' class='form-control'/>").datetimepicker({showTodayButton: true, viewMode: "days", format: "YYYY-MM-DD"});
         },
- 
+
         editTemplate: function(value) {
-			return this._editPicker = $("<input type='text' class='form-control' value='" + value + "'/>").datetimepicker({showTodayButton: true, viewMode: "days", format: "YYYY-MM-DD"});
+			       return this._editPicker = $("<input type='text' class='form-control' value='" + value + "'/>").datetimepicker({showTodayButton: true, viewMode: "days", format: "YYYY-MM-DD"});
         },
- 
+
         insertValue: function() {
             return this._insertPicker.val();
         },
- 
+
         editValue: function() {
             return this._editPicker.val();
         }
     });
- 
+
     jsGrid.fields.customDate = MyDateField;
 }
 
@@ -484,112 +480,112 @@ function addDateTimeType() {
 	var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
- 
+
     MyDateField.prototype = new jsGrid.Field({
         sorter: function(date1, date2) {
             return new Date(date1) - new Date(date2);
         },
- 
+
         itemTemplate: function(value) {
             return moment(value).format("YYYY-MM-DD hh:mm:ss");
         },
- 
+
         insertTemplate: function(value) {
             return this._insertPicker = $("<input type='text' class='form-control'/>").datetimepicker({showTodayButton: true, format: "YYYY-MM-DD hh:mm:ss"});
         },
- 
+
         editTemplate: function(value) {
 			return this._editPicker = $("<input type='text' class='form-control' value='" + moment(value).format("YYYY-MM-DD hh:mm:ss") + "'/>").datetimepicker({showTodayButton: true, format: "YYYY-MM-DD hh:mm:ss"});
         },
- 
+
         insertValue: function() {
             return this._insertPicker.val();
         },
- 
+
         editValue: function() {
             return this._editPicker.val();
         }
     });
- 
-    jsGrid.fields.customDateTime = MyDateField;	
+
+    jsGrid.fields.customDateTime = MyDateField;
 }
 
 function addTimeType() {
 	var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
- 
+
     MyDateField.prototype = new jsGrid.Field({
         sorter: function(date1, date2) {
             return new Date(date1) - new Date(date2);
         },
- 
+
         itemTemplate: function(value) {
             return moment(value).format("LT");
         },
- 
+
         insertTemplate: function(value) {
             return this._insertPicker = $("<input type='text' class='form-control'/>").datetimepicker({format: "LT"});
         },
- 
+
         editTemplate: function(value) {
 			return this._editPicker = $("<input type='text' class='form-control' value='" + moment(value).format("LT") + "'/>").datetimepicker({format: "LT"});
         },
- 
+
         insertValue: function() {
             return this._insertPicker.val();
         },
- 
+
         editValue: function() {
             return this._editPicker.val();
         }
     });
- 
-    jsGrid.fields.customTime = MyDateField;		
+
+    jsGrid.fields.customTime = MyDateField;
 }
 
 function addCustomTextArea() {
 	var MyDateField = function(config) {
         jsGrid.Field.call(this, config);
     };
- 
+
     MyDateField.prototype = new jsGrid.Field({
         sorter: function(string1, string2) {
-            return string1 > string2
+            return(string1 > string2);
         },
- 
+
         itemTemplate: function(value) {
             return _.escape(value.slice(0, 30));
         },
- 
+
         insertTemplate: function(value) {
             return this._insertPicker = $("<textarea rows='7' class='form-control'></textarea>");
         },
- 
+
         editTemplate: function(value) {
 			return this._editPicker = $("<textarea rows='7' class='form-control'>" + value + "</textarea>");
         },
- 
+
         insertValue: function() {
             return this._insertPicker.val();
         },
- 
+
         editValue: function() {
             return this._editPicker.val();
         }
     });
- 
-    jsGrid.fields.customTextArea = MyDateField;	
+
+    jsGrid.fields.customTextArea = MyDateField;
 }
 
 function addFieldToRender(event, node) {
-	var parent   = $('#tree').treeview('getParent', node),
-		parent   = $('#tree').treeview('getParent', parent),
-		tableId  = parent.href.replace("#", ""),
-		metadata = getMetadata(tableId),
-		fieldId  = node.fieldId,
-		field    = _.find(metadata.fields, function(item) { return item.id == fieldId });
-	
+	var grandparent   = $('#tree').treeview('getParent', node),
+  		parent        = $('#tree').treeview('getParent', grandparent),
+  		tableId       = parent.href.replace("#", ""),
+  		metadata      = getMetadata(tableId),
+  		fieldId       = node.fieldId,
+  		field         = _.find(metadata.fields, function(item) { return(item.id == fieldId); });
+
 	field.hidden = !field.hidden;
 }
 
@@ -597,6 +593,6 @@ $(document).ready(function(){
 	 addDateType();
 	 addDateTimeType();
 	 addTimeType();
-	 addCustomTextArea()
-	$(".tab-close").on("click", bindCloseTab);	
+	 addCustomTextArea();
+	$(".tab-close").on("click", bindCloseTab);
 });
