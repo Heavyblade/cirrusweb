@@ -85,7 +85,7 @@ body {background: url(https://s3.amazonaws.com/cirrusjsassets/black_lozenge.png)
 		    border-bottom: 0;
 		  }
         }
-		
+
 #crear_tarea {
     padding: 20px;
     background-color: rgb(230,230,230);
@@ -94,5 +94,9 @@ body {background: url(https://s3.amazonaws.com/cirrusjsassets/black_lozenge.png)
 }
 
 form {
-padding: 20px; background-color: rgb(240,240,240); border: 1px solid rgb(230,230,230)    
-    }
+	padding: 20px;
+	background-color: rgb(240,240,240);
+	border: 1px solid rgb(230,230,230);
+}
+
+#vars_container h4 { border-bottom: 1px solid rgb(150,150,150) !important;}

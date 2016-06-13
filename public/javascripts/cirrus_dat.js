@@ -1,3 +1,23 @@
+/**
+* Alloy to serialize a form as a JSON object.
+*/
+$.fn.serializeObject = function()
+{
+    var o = {};
+    var a = this.serializeArray();
+    $.each(a, function() {
+        if (o[this.name] !== undefined) {
+            if (!o[this.name].push) {
+                o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+        } else {
+            o[this.name] = this.value || '';
+        }
+    });
+    return o;
+};
+
 function existy(x) {
  return x !== null && x !== undefined;
 }
@@ -28,15 +48,16 @@ function construct(head, tail) {
 * y cargar un nuevo tab con los contenidos de la tabla correspondiente.
 * @param data {object} - Objeto correpondiente al nodo seleccionado.
 */
-function loadTable(data) {
+function loadTable(data, _options) {
     if ( _.isUndefined(data.href) || _.isUndefined(data.indexId) ) { return; }
+    _options = _options || {};
 
     var params        = { index: data.indexId },
         tableMetadata = getMetadata(data.href.replace("#", '')),
         id            = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
         index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
         neededFields  = getNeededFields(tableMetadata, index.parts),
-        baseOptions   = { width:             'auto',
+        defaultOptions= { width:             'auto',
                         height:              'auto',
                         autoload:            true,
                         inserting:           true,
@@ -48,27 +69,29 @@ function loadTable(data) {
                         rowClick:            rowClickHandler(id),
                         loadIndicationDelay: 300,
                         multiselect:         true,
-                        deleteConfirm:       "Estas seguro de eliminar este registro?" };
+                        deleteConfirm:       "Estas seguro de eliminar este registro?" },
+        baseOptions   = _.defaults(_options, defaultOptions);
 
     if ( _.isUndefined(data.indexResolve) ) {
-      if ( data.indexType == 1 || data.indexType == 4 ) {
-        var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
-        if ( resolve ) {
-          params.indexResolve = resolve;
-        } else {
-          alert("No pueden obtenerse datos sin valores para la resolución del indice");
+        if ( data.indexType == 1 || data.indexType == 4 ) {
+            var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
+            if ( resolve ) {
+                params.indexResolve = resolve;
+            } else {
+                alert("No pueden obtenerse datos sin valores para la resolución del indice");
+            }
         }
-      }
     } else {
-      params.indexResolve = data.indexResolve;
+        params.indexResolve = data.indexResolve;
     }
 
     baseOptions.fields         = buildFields(tableMetadata, index, id);
+    console.log(baseOptions.fields);
     baseOptions.pagerContainer = "#pager" + id;
     if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
     if ( data.ids ) { params.ids = data.ids; }
     if ( data.filterScript ) { params.filterScript = data.filterScript; }
-    baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index);
+    baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index, data.data);
 
     if ( _.isUndefined( window.selected )) { window.selected = {};}
     window.selected[id] = [];
@@ -88,27 +111,39 @@ function loadTable(data) {
     $("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
     $("#content" + id + " .filter").on("click", filter(tableMetadata));
     $("#content" + id + " .v7_export").on("click", exportToExcel(id, tableMetadata));
+    $("#content" + id + " .processes").on("click", showProcesses(id, tableMetadata));
     $("#size_" + id).on("change", updateTableSize);
+    $("#refresh_" + id).on("click", function() { $("#grid" + id).jsGrid("loadData"); });
+
+    // Necesario para recalcular size en render de data estatica.
+    if ( !_.isUndefined(data.data) ) { setTimeout(function() { $("#grid" + id).jsGrid("refresh"); }, 1000); }
 }
 
 /**
 * @method buildLoadData
 * Este metodo crea las promises de los end-points que serviran al grid que representa la tabla
 *
-* @param idRef {string} - el id de la tabla que se corresponde con el end-point respetando
-* la convencio solucionvdc/tabla que tiene velneo
-* @param fields {Array[string]} - Representa los campos que se desean traer de la tabla en cuestion.
-* @param index {object} - Un objeto indice proveniente de la metadata de la tabla tal cual llega de back end.
+* @param idRef  {string} - el id de la tabla que se corresponde con el end-point respetando la convencio solucionvdc/tabla que tiene velneo
+* @param params {object} - Parametros extra a añadir en cada petición.
+* @param index  {object} - Un objeto indice proveniente de la metadata de la tabla tal cual llega de back end.
+* @param data   {Array}  - Data fuente para construir el grid.
 */
-function buildLoadData(idRef, params, index) {
+function buildLoadData(idRef, params, index, data) {
   return({
     loadData: function(filter) {
-      return $.ajax({
-        type: "GET",
-        url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
-        data: _.extend(filter, params),
-        dataType: "json"
-      });
+                if( _.isUndefined(data) ) {
+                        return $.ajax({
+                            type: "GET",
+                            url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
+                            data: _.extend(filter, params),
+                            dataType: "json"
+                        });
+                } else {
+                        var from = ((filter.pageIndex - 1)  * filter.pageSize),
+                            to   = from + filter.pageSize -1;
+
+                        return({data: data.slice(from, to), itemsCount: data.length});
+                }
     },
 
     insertItem: function(item) {
@@ -143,6 +178,104 @@ function buildLoadData(idRef, params, index) {
       });
     },
   });
+}
+
+/**
+* Displays an html form where the user selects the process and variables to
+* execute a process on the vServer.
+* @param metadata {object} - an JSON object that represent a table metadata.
+*/
+function showProcesses(id, metadata) {
+    return(function(){
+        if ( (metadata.processes || []).length > 0 ) {
+            openModal({templateId:      "#process",
+                       templateContext: {processes: metadata.processes},
+                       title:           "Seleccionar proceso",
+                       afterCallback:   bindSelect(metadata),
+                       successButton:   { title:    "Ejecutar", callback: executeProcess(id, metadata.id) }
+            });
+        } else {
+            swal({title: "Mensaje",
+                  text:  "No hay procesos asociados",
+                  type:  "error"
+            });
+        }
+    });
+}
+
+/**
+* Creates a closure to attach an event to display the available vars
+* depending on the selected process.
+* @param metadata {object} - an JSON object that represent a table metadata.
+*/
+function bindSelect(metadata) {
+    var addFields = function() {
+                      var selected = $("#process_id").val();
+                      var proc = _.find(metadata.processes, function(item){ return(item.id == selected); });
+                      if ( proc ) {
+                         var html = _.template($("#vars").html())({vars: proc.vars});
+                         $("#vars_container").html(html);
+                      }
+    };
+
+    setTimeout(addFields, 1000)
+    return(function() {
+            $('#process_id').unbind();
+            $("#process_id").on("change", addFields);
+    });
+}
+
+/**
+* Takes the params from the form and make a request to backend to execute a processs with
+* an specific set of params.
+**/
+function executeProcess(id, tableId) {
+    return(function(){
+          var data = $("#process_id").serializeObject(),
+              proc = data.proceso.replace(".", ""),
+              ids  = getSelectedIds(id);
+
+              delete(data.proceso);
+              data.ids     = ids;
+              data.tableId = tableId.replace(".", "");
+
+          $.ajax({type:     "POST",
+                  url:      "/api/v1/exec_proc/" + proc,
+                  data:     data,
+                  dataType: "json",
+                  success:  function(result) {
+                                $("#myModal").modal("hide");
+                                if ( result.message == "success" ) {
+                                    swal({title: "Mensaje",
+                                            text:  "El proceso se ha ejecutado exitosamente",
+                                            type:  "success",
+                                            timer: 1000
+                                    });
+
+                                    if ( !_.isUndefined(result.outputTable) ) {
+                                            loadTable({
+                                                href:    result.outputTable.replace(".", ""),
+                                                indexId: result.index.id,
+                                                data:    result.data
+                                            });
+                                    }
+                                } else {
+                                  swal({title: "Mensaje",
+                                        text:  "Ha habido un problema ejecutando el proceso",
+                                        type:  "error",
+                                        timer: 1000
+                                  });
+                                }
+                  },
+                  error: function() {
+                            $("#myModal").modal("hide");
+                            swal({title: "Mensaje",
+                                  text:  "Ha habido un problema ejecutando el proceso",
+                                  type:  "error"
+                            });
+                  }
+          });
+    });
 }
 
 /**
@@ -194,6 +327,7 @@ function filter(table) {
  * openModal
  * Will open a modal window with an html and and button actions
  * @param opts.templateId    {string} - The selector for the template that holds the html
+ * @param opts.templateContext {object} - Context for the template
  * @param opts.title         {string} - The title for the modal box
  * @param opts.successButton {object} -The name and callback that will be associated with the succes button
  */
@@ -202,21 +336,28 @@ function openModal(opts) {
 
     if ( html !== "" && html !== undefined && html !== null ) {
       $('#myModal .modal-body').html(html);
-      if ( opts.title ) { $('#myModal h4.modal-title').html(opts.title); }
-      if ( opts.successButton ) {
-        $('#myModal .btn-primary').html(opts.successButton.title);
-        $('#myModal .btn-primary').unbind();
-        $('#myModal .btn-primary').on("click", opts.successButton.callback);
-        /*
-          var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
-                  styleActiveLine: true,
-                  matchBrackets: true,
-                  lineNumbers: true,
-                  theme: "monokai",
-                  mode: "javascript"
-                });
-        */
-       }
+
+      $("#myModal").on("shown.bs.modal", function(){
+          if ( opts.title ) { $('#myModal h3.modal-title').html(opts.title); }
+          if ( opts.afterCallback ) { opts.afterCallback(); }
+          if ( opts.successButton ) {
+
+            $('#myModal .btn-primary').html(opts.successButton.title);
+            $('#myModal .btn-primary').unbind();
+            $('#myModal .btn-primary').on("click", opts.successButton.callback);
+
+            /*
+              var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
+                      styleActiveLine: true,
+                      matchBrackets: true,
+                      lineNumbers: true,
+                      theme: "monokai",
+                      mode: "javascript"
+                    });
+            */
+           }
+      });
+
     }
 
     $("#myModal").modal();
@@ -486,10 +627,16 @@ function getSelectedIds(id, localField, all) {
         indexes = window.selected[id],
         ids;
 
-        if (all) {
-            return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
-        } else if (indexes.length > 0) {
+        // if (all) {
+        //     return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
+        // } else if (indexes.length > 0) {
+        //     return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
+        // }
+
+        if ( indexes.length > 0 ) {
             return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
+        } else {
+            return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
         }
 
         return([]);

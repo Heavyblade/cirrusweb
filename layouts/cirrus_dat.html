@@ -21,7 +21,8 @@
     <link href="/public/css/jsgrid.min.css" rel="stylesheet">
     <link href="/public/css/jsgrid-theme.min.css" rel="stylesheet">
     <link href="/public/css/datepicker/bootstrap-datetimepicker.min.css" rel="stylesheet">
-    <link href="/public/css/sweetalert.css" rel="stylesheet">	
+    <link href="/public/css/sweetalert.css" rel="stylesheet">
+    <link href="/public/css/bootstrap-chosen.css" rel="stylesheet">
     <link href="/public/css/cirrus_dat.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
@@ -55,7 +56,7 @@
 
             <div class="navbar-default sidebar" role="navigation" style="background-color: transparent; border-color: transparent; margin-top: 0px;">
                 <div class="sidebar-search">
-					<h1 style="margin-top: 0px;">CirrusDat</h1>
+					          <h1 style="margin-top: 0px;">CirrusDat</h1>
                     <div class="input-group custom-search-form">
                         <input id="searchTerm" type="text" class="form-control" placeholder="Filtrar">
                         <span class="input-group-btn">
@@ -66,6 +67,7 @@
                     </div>
                     <!-- /input-group -->
                 </div>
+
                   <div id="tree"></div>
             </div>
             <!-- /.navbar-static-side -->
@@ -93,7 +95,7 @@
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
+          <div class="modal-header modal-header-primary">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h3 class="modal-title">Modal title</h3>
           </div>
@@ -118,7 +120,7 @@
     <script src="/public/javascripts/cirrus_dat.js"></script>
     <script src="/public/javascripts/sweetalert.min.js"></script>
     <script src="/public/javascripts/jsGridToExcel.js"></script>
-
+    <script src="/public/javascripts/chosen.jquery.js"></script>
 
     <script type="text/javascript">
         $(document).ready(function(){
@@ -138,36 +140,38 @@
                                 var key = keys[z];
 
                                 var tables = _.map(grouped[key], function(item){
-                                fields =[{	text: "Campos",
-                                            color: "6D6D6D",
-                                            icon: "glyphicon glyphicon-folder-close",
-                                            nodes: _.map(item.fields, function(field) {
-                                                  return({text: 		field.name,
-                                                      selectable: false,
-                                                      fieldId: 	field.id,
-                                                      state: 		{ checked: true}});
-                                            })
-                                            },
-                                            {	text: "Indices",
-                                                                            color: "6D6D6D",
-                                            icon: "glyphicon glyphicon-folder-close",
-                                            nodes: _.map(item.indexes, function(index) {
-                                                  return({ href:  	 ("#" + item.id.replace(".", "")),
-                                                       text: 		 (" " + index.id),
-                                                       indexType:  index.type,
-                                                       selectable: true,
-                                                       indexId: 	 index.id,
-                                                       parts:      index.parts,
-                                                       icon: 		 "glyphicon glyphicon-bookmark"});
-                                            })
-                                            }];
+                                        fields =[{	text: "Campos",
+                                                    color: "6D6D6D",
+                                                    icon: "glyphicon glyphicon-folder-close",
+                                                    nodes: _.map(item.fields, function(field) {
+                                                        return({text: 		field.name,
+                                                            selectable: false,
+                                                            fieldId: 	field.id,
+                                                            state: 		{ checked: true}});
+                                                    })
+                                                    },
+                                                    {text: "Indices",
+                                                    color: "6D6D6D",
+                                                    icon: "glyphicon glyphicon-folder-close",
+                                                    nodes: _.map(item.indexes, function(index) {
+                                                        return({ href:  	 ("#" + item.id.replace(".", "")),
+                                                            text: 		 (" " + index.id),
+                                                            indexType:  index.type,
+                                                            selectable: true,
+                                                            indexId: 	 index.id,
+                                                            parts:      index.parts,
+                                                            icon: 		 "glyphicon glyphicon-bookmark"});
+                                                    })
+                                                    }];
                                             var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
+                                           
                                             return({href:      ("#" + item.id.replace(".", "")),
-                                            icon:      "glyphicon glyphicon-folder-close",
-                                            text:      " " + (item.name || item.singleName),
-                                            tableType: item.tableTtype,
-                                            indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
-                                            nodes:     fields});
+                                                    icon:      "glyphicon glyphicon-folder-close",
+                                                    text:      " " + (item.name || item.singleName),
+                                                    tableType: item.tableTtype,
+                                                    indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
+                                                    nodes:     fields
+                                        });
                                 });
 
                                 treeData.push({text:       key,

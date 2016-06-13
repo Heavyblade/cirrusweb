@@ -16,7 +16,7 @@
 <script src="/public/javascripts/codemirror/mode/javascript.js"></script>
 <script src="/public/javascripts/codemirror/addon/active-line.js"></script>
 <script src="/public/javascripts/codemirror/addon/matchbrackets.js"></script>
- 
+
 <script type="text/template" id="tabTemplate">
 	<li role='presentation'>
 		<a id='<%= id %>' href='#content<%= id %>' aria-controls='home' role='tab' data-toggle='tab'>
@@ -32,7 +32,7 @@
 			<% if ( editable ) { %>
 				<div class='mode'>
 						<div class="btn-group" data-toggle="buttons">
-						<label class="btn btn-primary <%= mode == "navigation" ? "" : "active" %>">  
+						<label class="btn btn-primary <%= mode == "navigation" ? "" : "active" %>">
 							<input type="radio" name="options_<%= id %>" id="nav_<%= id %>" autocomplete="off" checked>Navegación
 							<i class='glyphicon glyphicon-ok'/>
 						</label>
@@ -43,24 +43,24 @@
 						</div>
 				</div>
 			<% } %>
-			
+
 			<div class="btn-group action_button">
 					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					Acciones <span class="caret"></span>
 					</button>
 					<ul class="dropdown-menu">
 						<% if( isMaster ) { %>
-								<li><a class="nav_plural" href="#all"><span class="glyphicon glyphicon-folder-open"></span>Plurales de todos</a></li>
-								<li><a class="nav_plural" href="#selected"><span class="glyphicon glyphicon-folder-open"></span>Plurales Seleccionados</a></li>
-								<li role="separator" class="divider"></li> 
+								<li><a class="nav_plural" href="#all"><span class="glyphicon glyphicon-folder-open"></span>Plurales</a></li>
 						<% } %>
-						<li><a class="nav_master" href="#all"><span class="glyphicon glyphicon-level-up"></span>Maestros de todos</a></li>
-						<li><a class="nav_master" href="#selected"><span class="glyphicon glyphicon-level-up"></span>Maestros Seleccionados</a></li>
+						<li><a class="nav_master" href="#all"><span class="glyphicon glyphicon-level-up"></span>Maestros</a></li>
 						<li><a class="v7_export" href="#exportar_<%= id %>"><span class="glyphicon glyphicon-floppy-disk"></span>Exportar Excel</a></li>
-						<li><a class="filter" href="#all"><span class="glyphicon glyphicon-filter"></span>Filtrar</a></li>
+						<li><a class="filter" href="#"><span class="glyphicon glyphicon-filter"></span>Filtrar</a></li>
+						<li><a href="#" id="refresh_<%= id %>"><span class="glyphicon glyphicon-repeat"></span>Refrescar</a></li>
+            			<li role="separator" class="divider"></li>
+            			<li><a class="processes" href="#all"><span class="glyphicon glyphicon-cog"></span>Procesos</a></li>
 						<% if ( editable ) { %>
-							<li role="separator" class="divider"></li>							
-							<li><a class="v7_action" href="#eliminar_<%= id %>"><span class="glyphicon glyphicon-trash"></span>Eliminar</a></li>		
+							<li role="separator" class="divider"></li>
+							<li><a class="v7_action" href="#eliminar_<%= id %>"><span class="glyphicon glyphicon-trash"></span>Eliminar</a></li>
 						<% } %>
 					</ul>
 			</div>
@@ -111,3 +111,39 @@
 			<input type="text" id="filterScript" class="form-control" value=""/>
 		</div>
 </script>
+
+<script type="text/template" id="process">
+      <form id="process_form" action="#" class="form-horizontal">
+          <div class="form-group">
+            <label for="inputEmail3" class="col-sm-2 control-label">Proceso</label>
+            <div class="col-sm-10">
+              <select class="form-control" id="process_id" name="proceso">
+                  <% z = processes.length %>
+                  <% for(var i=0; i < z; i++) { %>
+                    <option value="<%= processes[i].id %>"><%= processes[i].id %></option>
+                  <% } %>
+              </select>
+            </div>
+          </div>
+          <div id="vars_container"/>
+      </form>
+</script>
+
+<script type="text/template" id="vars">  
+    <% var varsLength = vars.length; %>
+		<% if( varsLength > 0 ) { %>
+			 <h4 style="border-bottom: 1px solid rgb(220,220,220); padding-bottom: 10px;">Variables</h4>
+		    <% for(var x=0; x < varsLength; x++) { %>
+		        <div class="form-group">
+		            <label class="col-sm-5 control-label"><%= vars[x] %></label>
+		            <div class="col-sm-7">
+		                <input type="text"  name="<%= vars[x] %>" class="form-control input-sm"/>
+		            </div>
+		        </div>
+		    <% } %>
+		<% } %>
+</script>
+
+<script type="text/template" id="processes_and_searches">
+
+<script />
