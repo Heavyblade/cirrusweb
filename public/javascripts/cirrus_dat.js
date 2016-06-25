@@ -1,5 +1,5 @@
 /**
-* Alloy to serialize a form as a JSON object.
+* Allow to serialize a form as a JSON object.
 */
 $.fn.serializeObject = function()
 {
@@ -57,19 +57,19 @@ function loadTable(data, _options) {
         id            = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
         index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
         neededFields  = getNeededFields(tableMetadata, index.parts),
-        defaultOptions= { width:             'auto',
-                        height:              'auto',
-                        autoload:            true,
-                        inserting:           true,
-                        editing:             false,
-                        sorting:             true,
-                        paging:              true,
-                        pageLoading:         true,
-                        loadIndication:      true,
-                        rowClick:            rowClickHandler(id),
-                        loadIndicationDelay: 300,
-                        multiselect:         true,
-                        deleteConfirm:       "Estas seguro de eliminar este registro?" },
+        defaultOptions= { width:               'auto',
+                          height:              'auto',
+                          autoload:            true,
+                          inserting:           true,
+                          editing:             false,
+                          sorting:             true,
+                          paging:              true,
+                          pageLoading:         true,
+                          loadIndication:      true,
+                          rowClick:            rowClickHandler(id),
+                          loadIndicationDelay: 300,
+                          multiselect:         true,
+                          deleteConfirm:       "Estas seguro de eliminar este registro?" },
         baseOptions   = _.defaults(_options, defaultOptions);
 
     if ( _.isUndefined(data.indexResolve) ) {
@@ -86,7 +86,6 @@ function loadTable(data, _options) {
     }
 
     baseOptions.fields         = buildFields(tableMetadata, index, id);
-    console.log(baseOptions.fields);
     baseOptions.pagerContainer = "#pager" + id;
     if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
     if ( data.ids ) { params.ids = data.ids; }
@@ -97,10 +96,10 @@ function loadTable(data, _options) {
     window.selected[id] = [];
 
     $(_.template($("#tabTemplate").html())({id: id, name: tableMetadata.name})).appendTo(".nav-tabs");
-    $(_.template($("#contentTemplate").html())({id: id,
-                          mode: tableMetadata.editable ? "editing" : "navigation",
-                          isMaster: tableMetadata.tableType === 0 || tableMetadata.tableType === 3,
-                          editable: tableMetadata.editable})).appendTo(".tab-content");
+    $(_.template($("#contentTemplate").html())({id:       id,
+                                                mode:     tableMetadata.editable ? "editing" : "navigation",
+                                                isMaster: tableMetadata.tableType === 0 || tableMetadata.tableType === 3,
+                                                editable: tableMetadata.editable})).appendTo(".tab-content");
 
     $("#grid" + id).jsGrid(baseOptions);
     $(".tab-close").on("click", bindCloseTab);
@@ -128,21 +127,29 @@ function loadTable(data, _options) {
 * @param index  {object} - Un objeto indice proveniente de la metadata de la tabla tal cual llega de back end.
 * @param data   {Array}  - Data fuente para construir el grid.
 */
-function buildLoadData(idRef, params, index, data) {
+function buildLoadData(idRef, params, index, data, query) {
   return({
     loadData: function(filter) {
-                if( _.isUndefined(data) ) {
-                        return $.ajax({
-                            type: "GET",
-                            url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
-                            data: _.extend(filter, params),
-                            dataType: "json"
-                        });
-                } else {
-                        var from = ((filter.pageIndex - 1)  * filter.pageSize),
-                            to   = from + filter.pageSize -1;
+                // For static records that return from a process
+                if( !_.isUndefined(data) ) {
+                      var from = ((filter.pageIndex - 1)  * filter.pageSize),
+                          to   = from + filter.pageSize -1;
 
-                        return({data: data.slice(from, to), itemsCount: data.length});
+                      return({data: data.slice(from, to), itemsCount: data.length});
+                // Normal table index
+                } else if ( !_.isUndefined(idRef) ) {
+                      return $.ajax({ type: "GET",
+                                      url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
+                                      data: _.extend(filter, params),
+                                      dataType: "json"
+                             });
+                // Using a query as source of records
+                } else if ( !_.isUndefined(query) ) {
+                      return $.ajax({ type: "GET",
+                                      url: ("/api/v1/query/" + query),
+                                      data: _.extend(filter, params),
+                                      dataType: "json"
+                             });
                 }
     },
 
@@ -203,6 +210,42 @@ function showProcesses(id, metadata) {
     });
 }
 
+function executeQuery(query) {
+    if ( query.vars.length > 0 ) {
+        openModal({templateId:      "#execQuery",
+                   templateContext: {id: query.id},
+                   title:           "Ejecutar Búsqueda",
+                   afterCallback:   addQueryVars(query),
+                   successButton:   { title: "Buscar", callback: requestQuery(query) }
+        });
+    } else {
+      requestQuery(query)();
+    }
+}
+
+function addQueryVars(query) {
+    return(function() {
+        var html = _.template($("#vars").html())({vars: query.vars});
+        $("#vars_container").html(html);
+    });
+}
+
+function requestQuery(vQuery) {
+    return(function() {
+          var data = $("#query_form").serializeObject(),
+            quer = data.query.replace(".", "");
+
+          var table        = getMetadata(vQuery.outputTable),
+              defaultIndex = _.find(table.indexes, function(item) { return item.indexType == 0 });
+
+          loadTable({href:    vQuery.outputTable,
+                     indexId: defaultIndex.id,
+                     query:   vQuery,
+                     params:  data
+          });
+    });
+}
+
 /**
 * Creates a closure to attach an event to display the available vars
 * depending on the selected process.
@@ -231,13 +274,16 @@ function bindSelect(metadata) {
 **/
 function executeProcess(id, tableId) {
     return(function(){
-          var data = $("#process_id").serializeObject(),
-              proc = data.proceso.replace(".", ""),
-              ids  = getSelectedIds(id);
+          var data = $("#process_form").serializeObject(),
+              proc = data.proceso.replace(".", "");
 
-              delete(data.proceso);
-              data.ids     = ids;
-              data.tableId = tableId.replace(".", "");
+          delete(data.proceso);
+
+          if ( !_.isUndefined(id) && !_.isUndefined(tableId) ) {
+            var ids      = getSelectedIds(id);
+            data.ids     = ids;
+            data.tableId = tableId.replace(".", "");
+          }
 
           $.ajax({type:     "POST",
                   url:      "/api/v1/exec_proc/" + proc,
@@ -247,9 +293,9 @@ function executeProcess(id, tableId) {
                                 $("#myModal").modal("hide");
                                 if ( result.message == "success" ) {
                                     swal({title: "Mensaje",
-                                            text:  "El proceso se ha ejecutado exitosamente",
-                                            type:  "success",
-                                            timer: 1000
+                                          text:  "El proceso se ha ejecutado exitosamente",
+                                          type:  "success",
+                                          timer: 1000
                                     });
 
                                     if ( !_.isUndefined(result.outputTable) ) {
@@ -341,20 +387,19 @@ function openModal(opts) {
           if ( opts.title ) { $('#myModal h3.modal-title').html(opts.title); }
           if ( opts.afterCallback ) { opts.afterCallback(); }
           if ( opts.successButton ) {
+              $('#myModal .btn-primary').html(opts.successButton.title);
+              $('#myModal .btn-primary').unbind();
+              $('#myModal .btn-primary').on("click", opts.successButton.callback);
 
-            $('#myModal .btn-primary').html(opts.successButton.title);
-            $('#myModal .btn-primary').unbind();
-            $('#myModal .btn-primary').on("click", opts.successButton.callback);
-
-            /*
-              var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
-                      styleActiveLine: true,
-                      matchBrackets: true,
-                      lineNumbers: true,
-                      theme: "monokai",
-                      mode: "javascript"
-                    });
-            */
+              /*
+                var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
+                        styleActiveLine: true,
+                        matchBrackets: true,
+                        lineNumbers: true,
+                        theme: "monokai",
+                        mode: "javascript"
+                      });
+              */
            }
       });
 
@@ -518,12 +563,8 @@ function toggleEditing() {
 
     if ( element == "edit" ) {
       $("#grid" + id).jsGrid("option", "editing", true);
-      // $("#grid" + id + " .jsgrid-grid-header tr th:first-child").hide();
-      // $("#grid" + id + " .jsgrid-grid-body tr td:first-child").hide();
     } else {
       $("#grid" + id).jsGrid("option", "editing", false);
-      // $("#grid" + id + " .jsgrid-grid-header tr th:first-child").show();
-      // $("#grid" + id + " .jsgrid-grid-body tr td:first-child").show();
     }
 }
 
@@ -627,19 +668,11 @@ function getSelectedIds(id, localField, all) {
         indexes = window.selected[id],
         ids;
 
-        // if (all) {
-        //     return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
-        // } else if (indexes.length > 0) {
-        //     return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
-        // }
-
         if ( indexes.length > 0 ) {
             return _.uniq(_.map(indexes, function(item){ return(data[item][localField || "ID"]); }));
         } else {
             return _.uniq( _.map(data, function(item){ return item[localField || "ID"]; }));
         }
-
-        return([]);
 }
 
 function addDateType() {

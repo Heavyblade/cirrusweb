@@ -21,7 +21,7 @@
 	width: 100% !important;
 }
 
-.node-icon.glyphicon-book + .check-icon, .node-icon.glyphicon-hdd  + .check-icon, .node-icon.glyphicon-bookmark + .check-icon {
+.node-icon.glyphicon-book + .check-icon, .node-icon.glyphicon-hdd  + .check-icon, .node-icon.glyphicon-bookmark + .check-icon, .node-icon.glyphicon-cog + .check-icon {
 	display: none;
 }
 

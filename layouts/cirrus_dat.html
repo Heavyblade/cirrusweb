@@ -30,6 +30,7 @@
     <!-- jQuery -->
     <script src="/public/javascripts/jquery.min.js"></script>
 
+
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -48,9 +49,7 @@
 </head>
 
 <body>
-
     <div id="wrapper">
-
         <!-- Navigation -->
         <nav class="navbar navbar-default" role="navigation" style="margin-bottom: 0; min-height: 0px;">
 
@@ -87,7 +86,6 @@
             <!-- /.container-fluid -->
         </div>
         <!-- /#page-wrapper -->
-
     </div>
     <!-- /#wrapper -->
 
@@ -111,18 +109,59 @@
     </div><!-- /.modal -->
 
     <!-- Support javascript libraries -->
-    <script src="/public/javascripts/bootstrap.min.js"></script>
-    <script src="/public/javascripts/bootstrap-treeview.min.js"></script>
-    <script src="/public/javascripts/undescore.min.js"></script>
-    <script src="/public/javascripts/jsgrid.min.js"></script>
-    <script src="/public/javascripts/datepicker/moment-with-locales.js"></script>
-    <script src="/public/javascripts/datepicker/bootstrap-datetimepicker.min.js"></script>
-    <script src="/public/javascripts/cirrus_dat.js"></script>
-    <script src="/public/javascripts/sweetalert.min.js"></script>
-    <script src="/public/javascripts/jsGridToExcel.js"></script>
-    <script src="/public/javascripts/chosen.jquery.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/bootstrap.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/bootstrap-treeview.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/undescore.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/jsgrid.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/datepicker/moment-with-locales.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/datepicker/bootstrap-datetimepicker.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/cirrus_dat.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/sweetalert.min.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/jsGridToExcel.js"></script>
+    <script  type="text/javascript" src="/public/javascripts/chosen.jquery.js"></script>
 
     <script type="text/javascript">
+
+        function buildVElements(type, title, collection) {
+                var nodeProcesses = _.map(collection, function(process) {
+                                        return({icon: "glyphicon glyphicon-cog",
+                                                color: "#5b5b5b",
+                                                text:  process.id.split("/")[1].toLowerCase(),
+                                                type:  type,
+                                                element: process
+                                        });
+                });
+
+                return({icon: "glyphicon glyphicon-cog",
+                        text: title,
+                        nodes: nodeProcesses
+                });
+        }
+
+        function addVBox(text, state, nodes) {
+                return({text:       text,
+                        state: 	    {expanded: state},
+                        selectable: false,
+                        color:      "#583F7E",
+                        icon:       "glyphicon glyphicon-hdd",
+                        nodes:      nodes
+                });
+        }
+
+        function nodeOnClick(event, data) {
+                if ( !_.isUndefined(data.element) ) {
+                    if ( data.type === "query" ) {
+                        executeQuery(data.element);
+                    } else {
+                        showProcesses(undefined, {processes: [data.element]})();
+                    }
+
+                } else {
+                    loadTable(data);
+                }
+                return false;
+        }
+
         $(document).ready(function(){
             $.ajax({type: "GET",
                     dataType: "json",
@@ -130,56 +169,86 @@
                     success: function(result) {
                             window.metadata = result.metadata;
 
-                            var grouped   = _.groupBy(result.metadata, function(item) { return(item.project); }),
-                                keys      = Object.keys(grouped),
-                                i         = keys.length,
-                                treeData  = [],
-                                fields    = [];
+                            var grouped        = _.groupBy(result.metadata, function(item) { return(item.project); }),
+                                groupedProcess = _.groupBy(result.processNoOrigin, function(item) { return(item.project); }),
+                                groupedQueries = _.groupBy(result.queries, function(item) { return(item.project); }),
+                                keys           = Object.keys(grouped),
+                                i              = keys.length,
+                                treeData       = [],
+                                fields         = [];
 
                             for( z=0; z < i; z++ ) {
-                                var key = keys[z];
+                                var key    = keys[z],
+                                    tables = _.map(grouped[key], function(item){
+                                                     fields = [{text: "Campos",
+                                                                color: "6D6D6D",
+                                                                icon: "glyphicon glyphicon-folder-close",
+                                                                nodes: _.map(item.fields, function(field) {
+                                                                          return({text: 		field.name,
+                                                                              selectable: false,
+                                                                              fieldId: 	field.id,
+                                                                              state: 		{ checked: true}
+                                                                          });
+                                                                })
+                                                                },
+                                                                {text: "Indices",
+                                                                color: "6D6D6D",
+                                                                icon: "glyphicon glyphicon-folder-close",
+                                                                nodes: _.map(item.indexes, function(index) {
+                                                                          return({ href:  	 ("#" + item.id.replace(".", "")),
+                                                                              text: 		 (" " + index.id),
+                                                                              indexType:  index.type,
+                                                                              selectable: true,
+                                                                              indexId: 	 index.id,
+                                                                              parts:      index.parts,
+                                                                              icon: 		 "glyphicon glyphicon-bookmark"
+                                                                          });
+                                                                })
+                                                                }];
+                                                        var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
 
-                                var tables = _.map(grouped[key], function(item){
-                                        fields =[{	text: "Campos",
-                                                    color: "6D6D6D",
-                                                    icon: "glyphicon glyphicon-folder-close",
-                                                    nodes: _.map(item.fields, function(field) {
-                                                        return({text: 		field.name,
-                                                            selectable: false,
-                                                            fieldId: 	field.id,
-                                                            state: 		{ checked: true}});
-                                                    })
-                                                    },
-                                                    {text: "Indices",
-                                                    color: "6D6D6D",
-                                                    icon: "glyphicon glyphicon-folder-close",
-                                                    nodes: _.map(item.indexes, function(index) {
-                                                        return({ href:  	 ("#" + item.id.replace(".", "")),
-                                                            text: 		 (" " + index.id),
-                                                            indexType:  index.type,
-                                                            selectable: true,
-                                                            indexId: 	 index.id,
-                                                            parts:      index.parts,
-                                                            icon: 		 "glyphicon glyphicon-bookmark"});
-                                                    })
-                                                    }];
-                                            var defaultIndex = _.find(fields[1].nodes, function(item) { return item.indexType == 0 });
-                                           
-                                            return({href:      ("#" + item.id.replace(".", "")),
-                                                    icon:      "glyphicon glyphicon-folder-close",
-                                                    text:      " " + (item.name || item.singleName),
-                                                    tableType: item.tableTtype,
-                                                    indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
-                                                    nodes:     fields
-                                        });
+                                                        return({href:      ("#" + item.id.replace(".", "")),
+                                                                icon:      "glyphicon glyphicon-folder-close",
+                                                                text:      " " + (item.name || item.singleName),
+                                                                tableType: item.tableTtype,
+                                                                indexId:   (defaultIndex || fields[1].nodes[0]).indexId,
+                                                                nodes:     fields
+                                                        });
+                                             });
+
+                                // Adding processes placed in the current box
+                                if ( !_.isUndefined(groupedProcess[key]) ) {
+                                        tables.unshift(buildVElements("process", "Procesos", groupedProcess[key]));
+                                        delete(groupedProcess[key]);
+                                }
+
+                                // Adding querys placed in the current box
+                                if ( !_.isUndefined(groupedQueries[key]) ) {
+                                        tables.unshift(buildVElements("query", "Busquedas", groupedQueries[key]));
+                                        delete(groupedQueries[key]);
+                                }
+
+                                treeData.push(addVBox(key, z==0, tables));
+                            }
+
+                            // Add process that live only on object boxes.
+                            if ( Object.keys(groupedProcess).length > 0 ) {
+
+                                _.each(groupedProcess, function(item, key) {
+                                        var children = [buildVElements("process", "Procesos", groupedProcess[key])];
+
+                                        if ( groupedQueries[key] !== undefined ) {
+                                                children.push(buildVElements("query", "Busquedas", groupedQueries[key]));
+                                                delete(groupedQueries[key]);
+                                        }
+                                        treeData.push(addVBox(key, false, children));
                                 });
+                            }
 
-                                treeData.push({text:       key,
-                                              state: 	   {expanded: (z==0)},
-                                              selectable: false,
-                                              color:      "#583F7E",
-                                              icon:       "glyphicon glyphicon-hdd",
-                                              nodes:      tables
+                            // Add queries that live on object boxes that have not processes.
+                            if ( Object.keys(groupedQueries).length > 0 ) {
+                                _.each(groupedQueries, function(item, key) {
+                                        treeData.push(addVBox(key, false, [buildVElements("query", "Busquedas", groupedQueries[key])]));
                                 });
                             }
 
@@ -192,7 +261,7 @@
                                                  searchResultColor: 	"#FFF",
                                                  onNodeChecked: 		addFieldToRender,
                                                  onNodeUnchecked: 		addFieldToRender,
-                                                 onNodeSelected: 		function(event, data) {	loadTable(data); return false; }
+                                                 onNodeSelected: 	    nodeOnClick
                             });
                     }
             });
