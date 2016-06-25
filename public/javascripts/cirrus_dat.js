@@ -49,51 +49,48 @@ function construct(head, tail) {
 * @param data {object} - Objeto correpondiente al nodo seleccionado.
 */
 function loadTable(data, _options) {
-    if ( _.isUndefined(data.href) || _.isUndefined(data.indexId) ) { return; }
-    _options = _options || {};
 
-    var params        = { index: data.indexId },
-        tableMetadata = getMetadata(data.href.replace("#", '')),
-        id            = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
-        index         = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
-        neededFields  = getNeededFields(tableMetadata, index.parts),
-        defaultOptions= { width:               'auto',
-                          height:              'auto',
-                          autoload:            true,
-                          inserting:           true,
-                          editing:             false,
-                          sorting:             true,
-                          paging:              true,
-                          pageLoading:         true,
-                          loadIndication:      true,
-                          rowClick:            rowClickHandler(id),
-                          loadIndicationDelay: 300,
-                          multiselect:         true,
-                          deleteConfirm:       "Estas seguro de eliminar este registro?" },
-        baseOptions   = _.defaults(_options, defaultOptions);
+    var params          = { index: data.indexId },
+        tableMetadata   = getMetadata(data.href.replace("#", '')),
+        id              = tableMetadata.id.replace("/", "").replace(".", "") + Date.now(),
+        index           = _.find(tableMetadata.indexes, function(item) { return item.id == data.indexId; }),
+        neededFields    = getNeededFields(tableMetadata, index.parts),
+        defaultOptions  = { width:               'auto',
+                            height:              'auto',
+                            autoload:            true,
+                            inserting:           true,
+                            editing:             false,
+                            sorting:             true,
+                            paging:              true,
+                            pageLoading:         true,
+                            loadIndication:      true,
+                            rowClick:            rowClickHandler(id),
+                            loadIndicationDelay: 300,
+                            multiselect:         true,
+                            pagerContainer:      ("#pager" + id),
+                            fields:              buildFields(tableMetadata, index, id),
+                            deleteConfirm:       "Estas seguro de eliminar este registro?"
+                          },
+        baseOptions     = _.defaults(_options || {}, defaultOptions);
 
-    if ( _.isUndefined(data.indexResolve) ) {
-        if ( data.indexType == 1 || data.indexType == 4 ) {
-            var resolve = prompt("Indique un valor para resolver el indice", "Index Input");
-            if ( resolve ) {
-                params.indexResolve = resolve;
-            } else {
+    _.extend(params, _.pick(data, "ids", "filterScript", "indexResolve"));
+    if ( !_.isUndefined(data.query) && !_.isUndefined(data.query.params) ) { _.extend(params, data.query.params); }
+    window.selected[id] = [];
+
+    // Si el indice seleccionado debe de ser resuelto
+    if ( data.indexType == 1 || data.indexType == 4 ) {
+        if ( _.isUndefined(data.indexResolve) ) {
+            params.indexResolve = prompt("Indique un valor para resolver el indice", "Index Input");
+
+            if ( _.isNull(data.indexResolve) ) {
                 alert("No pueden obtenerse datos sin valores para la resolución del indice");
+                return;
             }
         }
-    } else {
-        params.indexResolve = data.indexResolve;
     }
 
-    baseOptions.fields         = buildFields(tableMetadata, index, id);
-    baseOptions.pagerContainer = "#pager" + id;
-    if( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
-    if ( data.ids ) { params.ids = data.ids; }
-    if ( data.filterScript ) { params.filterScript = data.filterScript; }
-    baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index, data.data);
-
-    if ( _.isUndefined( window.selected )) { window.selected = {};}
-    window.selected[id] = [];
+    if ( neededFields.length !== tableMetadata.fields.length && neededFields.length > 0 ) { params.fields = neededFields.join(","); }
+    baseOptions.controller = buildLoadData(tableMetadata.id.replace(".", ""), params, index, data.data, data.query);
 
     $(_.template($("#tabTemplate").html())({id: id, name: tableMetadata.name})).appendTo(".nav-tabs");
     $(_.template($("#contentTemplate").html())({id:       id,
@@ -104,7 +101,6 @@ function loadTable(data, _options) {
     $("#grid" + id).jsGrid(baseOptions);
     $(".tab-close").on("click", bindCloseTab);
     $('#' + id).tab('show');
-
     $("input[name=options_" + id + "]").on("change", toggleEditing);
     $("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
     $("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
@@ -119,7 +115,6 @@ function loadTable(data, _options) {
 }
 
 /**
-* @method buildLoadData
 * Este metodo crea las promises de los end-points que serviran al grid que representa la tabla
 *
 * @param idRef  {string} - el id de la tabla que se corresponde con el end-point respetando la convencio solucionvdc/tabla que tiene velneo
@@ -130,20 +125,20 @@ function loadTable(data, _options) {
 function buildLoadData(idRef, params, index, data, query) {
   return({
     loadData: function(filter) {
-                // For static records that return from a process
+                // Para casos de registros estáticos provenientes de un proceso.
                 if( !_.isUndefined(data) ) {
                       var from = ((filter.pageIndex - 1)  * filter.pageSize),
                           to   = from + filter.pageSize -1;
 
                       return({data: data.slice(from, to), itemsCount: data.length});
-                // Normal table index
+                // Funcionamiento normal con tabla e indice
                 } else if ( !_.isUndefined(idRef) ) {
                       return $.ajax({ type: "GET",
                                       url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
                                       data: _.extend(filter, params),
                                       dataType: "json"
                              });
-                // Using a query as source of records
+                // Usando una busqueda como fuente de datos.
                 } else if ( !_.isUndefined(query) ) {
                       return $.ajax({ type: "GET",
                                       url: ("/api/v1/query/" + query),
@@ -188,9 +183,9 @@ function buildLoadData(idRef, params, index, data, query) {
 }
 
 /**
-* Displays an html form where the user selects the process and variables to
-* execute a process on the vServer.
-* @param metadata {object} - an JSON object that represent a table metadata.
+* Muestra un form html donde el usuario selecciona el proceso y las variables
+* de entrada
+* @param metada {object} -un objecto JSON con la representación de una tabla.
 */
 function showProcesses(id, metadata) {
     return(function(){
@@ -210,6 +205,12 @@ function showProcesses(id, metadata) {
     });
 }
 
+/**
+ * Ejecuta una determinada busqueda
+ *
+ * @param query {object} - La representación de un vQuery de Velneo que llega en el payload
+ *
+ */
 function executeQuery(query) {
     if ( query.vars.length > 0 ) {
         openModal({templateId:      "#execQuery",
@@ -223,6 +224,11 @@ function executeQuery(query) {
     }
 }
 
+/**
+ * Añade al form html los inputs con las variables que tenga el la busqueda de Velneo
+ *
+ * @param query {object} - La representación de un vQuery de Velneo que llega en el payload
+ */
 function addQueryVars(query) {
     return(function() {
         var html = _.template($("#vars").html())({vars: query.vars});
@@ -230,26 +236,31 @@ function addQueryVars(query) {
     });
 }
 
+
+/**
+ * Realiza la llamada al API para que se tome como fuente de registros una búsqueda
+ * @param vQuery {object} -  La representación de un vQuery de Velneo que llega en el payload
+ */
 function requestQuery(vQuery) {
     return(function() {
           var data = $("#query_form").serializeObject(),
-            quer = data.query.replace(".", "");
+              quer = data.query.replace(".", "");
 
           var table        = getMetadata(vQuery.outputTable),
               defaultIndex = _.find(table.indexes, function(item) { return item.indexType == 0 });
 
+          vQuery.params = data;
           loadTable({href:    vQuery.outputTable,
                      indexId: defaultIndex.id,
                      query:   vQuery,
-                     params:  data
           });
     });
 }
 
 /**
-* Creates a closure to attach an event to display the available vars
-* depending on the selected process.
-* @param metadata {object} - an JSON object that represent a table metadata.
+* Crea un closure para hacer binding al cambio de proceso para mostrar las
+* variables del mismo.
+* @param metadata {object} -un objecto JSON con la representación de una tabla.
 */
 function bindSelect(metadata) {
     var addFields = function() {
@@ -269,9 +280,13 @@ function bindSelect(metadata) {
 }
 
 /**
-* Takes the params from the form and make a request to backend to execute a processs with
-* an specific set of params.
-**/
+* Toma los parametros del form y realizar un request al Rest API para ejecutar el proceso
+* con un set de parametros especificos.
+* @param id {string} - El id correspondiente al tab con el que se este trabajando.
+* @param tableId {string} - El idRef de la tabla de origen del proceso.
+*
+* @returns {function} - La función que servirá como callback para la ejcución del proceso.
+*/
 function executeProcess(id, tableId) {
     return(function(){
           var data = $("#process_form").serializeObject(),
@@ -325,9 +340,9 @@ function executeProcess(id, tableId) {
 }
 
 /**
- * exportToExcel
- * This function will export the content of the current data to a excel file.
+ * Esta funcion exportara el contenido del grid actual a un archivo de excel.
  * @param id {string} - the id for the current view
+ * @param metadata {object} -un objecto JSON con la representación de una tabla.
  */
 function exportToExcel(id, metadata) {
     return(function() {
@@ -338,7 +353,7 @@ function exportToExcel(id, metadata) {
 }
 
 /**
- * Updates de current page size on the current grid as is changed in the input
+ * Realiza un update a la tabla cuando se cambia el numero de fichas por página.
  * @return {void}
  */
 function updateTableSize() {
@@ -370,12 +385,11 @@ function filter(table) {
 }
 
 /**
- * openModal
- * Will open a modal window with an html and and button actions
- * @param opts.templateId    {string} - The selector for the template that holds the html
- * @param opts.templateContext {object} - Context for the template
- * @param opts.title         {string} - The title for the modal box
- * @param opts.successButton {object} -The name and callback that will be associated with the succes button
+ * Muestra un modal con el html dado y acciones en botones
+ * @param opts.templateId      {string}   - El selector css para el template que se renderizará.
+ * @param opts.templateContext {object} - Objecto json que será el contexto para el template.
+ * @param opts.title           {string}   - Titulo para el modal
+ * @param opts.successButton   {object}   - Opciones para el boton de acción, asignando un text y callback
  */
 function openModal(opts) {
       var html = _.template($(opts.templateId).html())(opts.templateContext);
@@ -409,9 +423,9 @@ function openModal(opts) {
 }
 
 /**
- * Create a closure to create global variable that will hold
- * the selected items on the grid
- * @param id {string} The id create for the current grid
+ * Crea un closure con id global del tab para responder al evento clikc
+ * en cada linea de la tabla.
+ * @param id {string} - EL id global del tab actual
  */
 function rowClickHandler(id) {
   return function(e) {

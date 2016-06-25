@@ -157,12 +157,15 @@
                     }
 
                 } else {
+                    if ( _.isUndefined(data.href) || _.isUndefined(data.indexId) ) { return false; }
                     loadTable(data);
                 }
                 return false;
         }
 
         $(document).ready(function(){
+            if ( _.isUndefined( window.selected )) { window.selected = {};}
+
             $.ajax({type: "GET",
                     dataType: "json",
                     url: "/metadata.json",
