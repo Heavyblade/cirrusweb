@@ -131,17 +131,18 @@ function buildLoadData(idRef, params, index, data, query) {
                           to   = from + filter.pageSize -1;
 
                       return({data: data.slice(from, to), itemsCount: data.length});
+
+                // Usando una busqueda como fuente de datos.
+                } else if ( !_.isUndefined(query) ) {
+                      return $.ajax({ type: "GET",
+                                      url: ("/api/v1/query/" + query.id),
+                                      data: _.extend(filter, params),
+                                      dataType: "json"
+                             });
                 // Funcionamiento normal con tabla e indice
                 } else if ( !_.isUndefined(idRef) ) {
                       return $.ajax({ type: "GET",
                                       url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
-                                      data: _.extend(filter, params),
-                                      dataType: "json"
-                             });
-                // Usando una busqueda como fuente de datos.
-                } else if ( !_.isUndefined(query) ) {
-                      return $.ajax({ type: "GET",
-                                      url: ("/api/v1/query/" + query),
                                       data: _.extend(filter, params),
                                       dataType: "json"
                              });
@@ -209,7 +210,6 @@ function showProcesses(id, metadata) {
  * Ejecuta una determinada busqueda
  *
  * @param query {object} - La representación de un vQuery de Velneo que llega en el payload
- *
  */
 function executeQuery(query) {
     if ( query.vars.length > 0 ) {
@@ -247,13 +247,14 @@ function requestQuery(vQuery) {
               quer = data.query.replace(".", "");
 
           var table        = getMetadata(vQuery.outputTable),
-              defaultIndex = _.find(table.indexes, function(item) { return item.indexType == 0 });
+              defaultIndex = _.find(table.indexes, function(item) { return item.type == 0 });
 
           vQuery.params = data;
           loadTable({href:    vQuery.outputTable,
                      indexId: defaultIndex.id,
                      query:   vQuery,
           });
+          $("#myModal").modal("hide");
     });
 }
 
