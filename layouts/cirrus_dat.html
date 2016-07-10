@@ -66,8 +66,15 @@
                     </div>
                     <!-- /input-group -->
                 </div>
-
-                  <div id="tree"></div>
+                <div id="editor_mode" class="btn-group" data-toggle="buttons">
+                    <label class="btn btn-primary active">
+                        <input type="radio" name="options_js_editor" id="navigation_mode" autocomplete="off" checked>Navegación
+                    </label>
+                    <label class="btn btn-info">
+                        <input type="radio" name="options_js_editor" id="js_console_mode" autocomplete="off">Consola JS
+                    </label>
+                </div>
+                <div id="tree"></div>
             </div>
             <!-- /.navbar-static-side -->
         </nav>
@@ -76,7 +83,7 @@
         <div id="page-wrapper">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-lg-12">
+                    <div class="col-lg-12" id="wrapper">
                         #yield
                     </div>
                     <!-- /.col-lg-12 -->
@@ -168,7 +175,7 @@
 
             $.ajax({type: "GET",
                     dataType: "json",
-                    url: "/metadata.json",
+                    url: "/metadata.json?token=" + window.token,
                     success: function(result) {
                             window.metadata = result.metadata;
 

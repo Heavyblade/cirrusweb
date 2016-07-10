@@ -104,11 +104,12 @@ function loadTable(data, _options) {
     $("input[name=options_" + id + "]").on("change", toggleEditing);
     $("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
     $("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
-    $("#content" + id + " .filter").on("click", filter(tableMetadata));
+    $("#content" + id + " .filter").on("click", filter(id));
     $("#content" + id + " .v7_export").on("click", exportToExcel(id, tableMetadata));
     $("#content" + id + " .processes").on("click", showProcesses(id, tableMetadata));
     $("#size_" + id).on("change", updateTableSize);
     $("#refresh_" + id).on("click", function() { $("#grid" + id).jsGrid("loadData"); });
+    $("#eliminar_" + id).on("click", deleteItems(id, tableMetadata.id, index));
 
     // Necesario para recalcular size en render de data estatica.
     if ( !_.isUndefined(data.data) ) { setTimeout(function() { $("#grid" + id).jsGrid("refresh"); }, 1000); }
@@ -123,7 +124,9 @@ function loadTable(data, _options) {
 * @param data   {Array}  - Data fuente para construir el grid.
 */
 function buildLoadData(idRef, params, index, data, query) {
+  _.extend(params, {token: window.token});
   return({
+    base: {idRef: idRef, params: params, index: index, data: data, query: query},
     loadData: function(filter) {
                 // Para casos de registros estáticos provenientes de un proceso.
                 if( !_.isUndefined(data) ) {
@@ -152,7 +155,7 @@ function buildLoadData(idRef, params, index, data, query) {
     insertItem: function(item) {
       return $.ajax({
         type: "POST",
-        url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",")),
+        url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",") + "&token=" + window.token),
         data: item,
         dataType: "json"
       });
@@ -164,7 +167,7 @@ function buildLoadData(idRef, params, index, data, query) {
 
       return $.ajax({
         type: "PUT",
-        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
+        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
         data: item,
         dataType: "json"
       });
@@ -175,7 +178,7 @@ function buildLoadData(idRef, params, index, data, query) {
         paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
       return $.ajax({
         type: "DELETE",
-        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id),
+        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
         data: item,
         dataType: "json"
       });
@@ -302,7 +305,7 @@ function executeProcess(id, tableId) {
           }
 
           $.ajax({type:     "POST",
-                  url:      "/api/v1/exec_proc/" + proc,
+                  url:      "/api/v1/exec_proc/" + proc + "?token=" + window.token,
                   data:     data,
                   dataType: "json",
                   success:  function(result) {
@@ -354,6 +357,35 @@ function exportToExcel(id, metadata) {
 }
 
 /**
+* Esta funcion tomara los registros seleccionados y los eliminará uno por uno
+* @param id    {string} - the id for the current view.
+* @param index {object} - el objeto index con el que se trabaja la tabla actual.
+*/
+function deleteItems(id, idRef, index) {
+    return(function() {
+          var data    = $("#grid" + id).jsGrid("option", "data"),
+              indexes = window.selected[id],
+              items   = _.map(indexes, function(item){ return(data[item]); });
+
+          if ( confirm("Esta Seguro que desea eliminar los registros seleccionaods ?") ) {
+              _.each(items, function(item){
+                    var parts       = _.values(_.pick.apply(null, construct(item, index.parts))),
+                        paramParts  = _.map(parts, function(item) { return("parts=" + item); }).join("&");
+                    
+                    $.ajax({
+                      type: "DELETE",
+                      url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
+                      data: item,
+                      dataType: "json"
+                    });   
+              });
+          }
+
+          $("#grid" + id).jsGrid("loadData");
+    });
+}
+
+/**
  * Realiza un update a la tabla cuando se cambia el numero de fichas por página.
  * @return {void}
  */
@@ -368,18 +400,19 @@ function updateTableSize() {
  * Filter will allow to load the table by an index and apply
  * @param  {table} table [description]
  */
-function filter(table) {
+function filter(id) {
   return function() {
-      openModal({templateId: "#filter",
-             templateContext: {indexes: table.indexes},
-             title: "Filtrar - " + table.name,
-             successButton: {title: "Filtrar", callback: function() {
-                loadTable({href:      ("#" + table.id.replace(".", "")),
-                       indexResolve:  $("#indexResolve").val(),
-                       indexId:       $("#indexFilterSelect").val(),
-                       filterScript:  $("#filterScript").val()
-                });
-             }}
+      openModal({templateId:      "#filter",
+                 templateContext: {},
+                 title:           "Filtrar",
+                 successButton: {title: "Filtrar",
+                                 callback: function() {
+                                            var otro = $("#grid" + id).jsGrid("option", "controller").base
+                                            otro.params.filterScript = $("#filterScript").val();
+                                            $("#grid" + id).jsGrid("option", "controller", buildLoadData(otro.idRef, otro.params, otro.index, otro.data, otro.query) );
+                                            $("#myModal").modal("hide");
+                                 }
+                 }
       });
       return false;
   };
@@ -406,15 +439,7 @@ function openModal(opts) {
               $('#myModal .btn-primary').unbind();
               $('#myModal .btn-primary').on("click", opts.successButton.callback);
 
-              /*
-                var editor = CodeMirror.fromTextArea(document.getElementById("indexFilter"), {
-                        styleActiveLine: true,
-                        matchBrackets: true,
-                        lineNumbers: true,
-                        theme: "monokai",
-                        mode: "javascript"
-                      });
-              */
+
            }
       });
 
@@ -837,10 +862,63 @@ function addFieldToRender(event, node) {
   field.hidden = !field.hidden;
 }
 
+function toggleJsConsole() {
+    var id = $(this).attr("id");
+
+    if ( id == "navigation_mode" ) {
+        $("#navigation_container").show();
+        $("#js_container").hide();
+    } else {
+        $("#navigation_container").hide();
+        $("#js_container").show();
+    }
+}
+
+function execScript() {
+    var code = window.editor.getValue();
+    $.ajax({type: "POST",
+            url: "/api/v1/js_console?token=" + window.token,
+            dataType: "json",
+            data: {script: code},
+            success: function(result) {
+                     _.each(result.log || [], function(line){
+                          if ( typeof(line) == "object" ) {
+                              var id    = '' + Date.now(),
+                                  item  = $("<tr><td id='" + id  + "'></td></tr>");
+                                  
+                                  item.appendTo($("#outputList"));
+                                  $("#" + id).JSONView(line, { collapsed: true });
+                          } else {
+                              var item = $("<tr><td>" + line  + "</td></tr>");
+                          }
+                          
+                          item.appendTo($("#outputList"));
+                     });
+            },
+            error: function(result) {
+                    if ( !_.isUndefined(result.responseJSON) ) {
+                        $("<tr><td>" + result.responseJSON.message + "</td></tr>").appendTo($("#outputList"));
+                    }
+            }
+    });
+}
+
 $(document).ready(function(){
       addDateType();
       addDateTimeType();
       addTimeType();
       addCustomTextArea();
+
+      window.editor = CodeMirror.fromTextArea(document.getElementById("js_editor"), {
+          styleActiveLine: true,
+          matchBrackets: true,
+          lineNumbers: false,
+          theme: "monokai",
+          mode: "javascript"
+      });
+
       $(".tab-close").on("click", bindCloseTab);
+      $("input[name=options_js_editor]").on("change",  toggleJsConsole);
+      $("#execScript").on("click", execScript);
+      $("#clearOutput").on("click", function(){ $("#outputList tr").remove(); });
 });
