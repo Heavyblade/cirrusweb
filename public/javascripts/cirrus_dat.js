@@ -124,7 +124,7 @@ function loadTable(data, _options) {
 * @param data   {Array}  - Data fuente para construir el grid.
 */
 function buildLoadData(idRef, params, index, data, query) {
-  _.extend(params, {token: window.token});
+  _.extend(params, {token: window.token, token_script: window.token_script});
   return({
     base: {idRef: idRef, params: params, index: index, data: data, query: query},
     loadData: function(filter) {
@@ -155,7 +155,7 @@ function buildLoadData(idRef, params, index, data, query) {
     insertItem: function(item) {
       return $.ajax({
         type: "POST",
-        url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",") + "&token=" + window.token),
+        url: ("/api/v1/" + idRef + "?parts=" + index.parts.join(",") + "&token=" + window.token + "&token_script=" + window.token_script),
         data: item,
         dataType: "json"
       });
@@ -167,7 +167,7 @@ function buildLoadData(idRef, params, index, data, query) {
 
       return $.ajax({
         type: "PUT",
-        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
+        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token + "&token_script=" + window.token_script),
         data: item,
         dataType: "json"
       });
@@ -178,7 +178,7 @@ function buildLoadData(idRef, params, index, data, query) {
         paramParts  = _.map(parts, function(item){ return("parts=" + item); }).join("&");
       return $.ajax({
         type: "DELETE",
-        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
+        url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token + "&token_script=" + window.token_script),
         data: item,
         dataType: "json"
       });
@@ -305,7 +305,7 @@ function executeProcess(id, tableId) {
           }
 
           $.ajax({type:     "POST",
-                  url:      "/api/v1/exec_proc/" + proc + "?token=" + window.token,
+                  url:      "/api/v1/exec_proc/" + proc + "?token=" + window.token + "&token_script=" + window.token_script,
                   data:     data,
                   dataType: "json",
                   success:  function(result) {
@@ -374,7 +374,7 @@ function deleteItems(id, idRef, index) {
                     
                     $.ajax({
                       type: "DELETE",
-                      url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token),
+                      url: ("/api/v1/" + idRef + "/" + parts[0] + "?" + paramParts + "&index=" + index.id + "&token=" + window.token + "&token_script=" + window.token_script),
                       data: item,
                       dataType: "json"
                     });   
@@ -877,7 +877,7 @@ function toggleJsConsole() {
 function execScript() {
     var code = window.editor.getValue();
     $.ajax({type: "POST",
-            url: "/api/v1/js_console?token=" + window.token,
+            url: "/api/v1/js_console?token=" + window.token + "&token_script=" + window.token_script,
             dataType: "json",
             data: {script: code},
             success: function(result) {
