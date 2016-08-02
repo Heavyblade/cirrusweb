@@ -208,7 +208,7 @@ function showProcesses(id, metadata) {
         }
     });
 }
-
+// expressionBeginOffset
 /**
  * Ejecuta una determinada busqueda
  *
@@ -484,6 +484,7 @@ function getMetadata(tableId) {
 }
 
 /**
+ * 
  * Construye el input que tomara la tabla a construir
  * @param  {object} table [ Metadata de la tabla para los campos ]
  * @param  {object} index [ Objeto index para construir la columna de selccion ]
@@ -598,12 +599,12 @@ function bindCloseTab() {
  * Habilita / Deshabilita la edición en la rejilla.
  */
 function toggleEditing() {
-    var id    = $(this).attr("id").split("_")[1],
-      element = $(this).attr("id").split("_")[0];
-
-    if ( element == "edit" ) {
+    
+    if ( $(this).attr("id").match(/edit/) ) {
+      var id = $(this).attr("id").split("edit_")[1];
       $("#grid" + id).jsGrid("option", "editing", true);
     } else {
+      var id = $(this).attr("id").split("nav_")[1];
       $("#grid" + id).jsGrid("option", "editing", false);
     }
 }
