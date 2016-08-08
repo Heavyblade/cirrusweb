@@ -104,12 +104,12 @@ function loadTable(data, _options) {
     $("input[name=options_" + id + "]").on("change", toggleEditing);
     $("#content" + id + " .nav_plural").on("click", nav_plural(tableMetadata, id, index));
     $("#content" + id + " .nav_master").on("click", nav_master(tableMetadata, id));
-    $("#content" + id + " .filter").on("click", filter(id));
+    $("#content" + id + " .filter").on("click", filter(id, tableMetadata));
     $("#content" + id + " .v7_export").on("click", exportToExcel(id, tableMetadata));
     $("#content" + id + " .processes").on("click", showProcesses(id, tableMetadata));
     $("#size_" + id).on("change", updateTableSize);
     $("#refresh_" + id).on("click", function() { $("#grid" + id).jsGrid("loadData"); });
-    $("#eliminar_" + id).on("click", deleteItems(id, tableMetadata.id, index));
+    $("#eliminar_" + id).on("click", deleteItems(id, tableMetadata.id.replace(".", ""), index));
 
     // Necesario para recalcular size en render de data estatica.
     if ( !_.isUndefined(data.data) ) { setTimeout(function() { $("#grid" + id).jsGrid("refresh"); }, 1000); }
@@ -255,7 +255,7 @@ function requestQuery(vQuery) {
           vQuery.params = data;
           loadTable({href:    vQuery.outputTable,
                      indexId: defaultIndex.id,
-                     query:   vQuery,
+                     query:   vQuery
           });
           $("#myModal").modal("hide");
     });
@@ -390,7 +390,7 @@ function deleteItems(id, idRef, index) {
  * @return {void}
  */
 function updateTableSize() {
-  var id    = $(this).attr("id").split("_")[1],
+  var id    = $(this).attr("id").split("size_")[1],
       value = parseInt($(this).val());
 
   if ( value > 0 ) { $("#grid" + id).jsGrid("option", "pageSize", value); }
@@ -400,10 +400,10 @@ function updateTableSize() {
  * Filter will allow to load the table by an index and apply
  * @param  {table} table [description]
  */
-function filter(id) {
+function filter(id, table) {
   return function() {
       openModal({templateId:      "#filter",
-                 templateContext: {},
+                 templateContext: {fields: _.map(table.fields, function(field) { return(field.id); })},
                  title:           "Filtrar",
                  successButton: {title: "Filtrar",
                                  callback: function() {
@@ -619,6 +619,11 @@ function toggleEditing() {
  */
 function nav_plural(table, id, index) {
     return function() {
+      if ( table.plurals.length == 0 ) {
+        swal("La tabla no tiene plurales");
+        return false;  
+      }
+      
       var _this = this;
       swal({ title:          "Escoger plural para " + table.name,
           text:               _.template($("#pluralsList").html())({plurals: _.map(table.plurals, function(x) { return {table: x.boundedTable.replace(".", "").replace("@", "/"), index: x.boundedIndexId, name: x.name }; })}),
@@ -631,6 +636,8 @@ function nav_plural(table, id, index) {
           closeOnCancel:      true
           },
           function(isConfirm){
+            if (isConfirm == false) { return; }
+
             var plural = $("#pluralSelect").val();
             if( plural !== "") {
               var table = plural.split("#")[0],
@@ -662,6 +669,11 @@ function nav_plural(table, id, index) {
  */
 function nav_master(table, id) {
     return function() {
+        if ( table.masters.length == 0 ) {
+            swal("La tabla no tiene maestros");
+            return false;  
+        }
+      
         var _this = this;
         swal({ title:           "Escoger Maestros para " + table.name,
             text:               _.template($("#mastersList").html())({masters: table.masters}),
@@ -674,6 +686,7 @@ function nav_master(table, id) {
             closeOnCancel:      true
             },
             function(isConfirm){
+              if (isConfirm == false) { return; }
               var master = $("#masterSelect").val();
               if( master !== "") {
                 var table     = master.split("#")[0].replace(".", "").replace("@", "/"),

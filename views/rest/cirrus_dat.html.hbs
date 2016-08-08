@@ -116,6 +116,13 @@
 <script type="text/template" id="filter">
 		<div class="form-group">
 			<label>Filtro:</label>
+			<div class="fieldsContainer">
+				<% z = fields.length %>
+				<p>Campos:</p>
+				<% for(var i=0; i < z; i++) { %>
+					<a href="#" class="filterField"><span class="label label-primary"><%= fields[i] %></span></a>
+				<% } %>
+			</div>
 			<input type="text" id="filterScript" class="form-control" value=""/>
 		</div>
 </script>
